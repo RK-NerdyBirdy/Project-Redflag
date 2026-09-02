@@ -1,9 +1,6 @@
 # Project Redflag
 
-XGBoost-based botnet / volumetric-DDoS traffic classifier for **Project Trinetra**, an IoT edge
-gateway for real-time attack detection. Trained on the BoT-IoT dataset using leakage-safe,
-short-window temporal features — deliberately excluding raw IP/MAC identifiers and long-term
-traffic averages, so the model learns attack *behavior* rather than memorizing testbed hosts.
+XGBoost-based botnet / volumetric-DDoS traffic classifier for **Project RedFlag**, an IoT edge gateway for real-time attack detection. Trained on the BoT-IoT dataset using leakage-safe, short-window temporal features — deliberately excluding raw IP/MAC identifiers and long-term traffic averages, so the model learns attack *behavior* rather than memorizing testbed hosts.
 
 ## How it works
 
