@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="edu.redflag.fx.OverviewController" styleClass="view-pane" spacing="20">
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+    
+    <Label text="SOC Global Overview" styleClass="view-title"/>
+    
+    <HBox spacing="20">
+        <VBox styleClass="card" HBox.hgrow="ALWAYS">
+            <Label text="Active Devices" styleClass="card-title"/>
+            <Label fx:id="lblActiveDevices" text="0" styleClass="card-value"/>
+        </VBox>
+        <VBox styleClass="card" HBox.hgrow="ALWAYS">
+            <Label text="Total Packets Processed" styleClass="card-title"/>
+            <Label fx:id="lblTotalPackets" text="0" styleClass="card-value"/>
+        </VBox>
+        <VBox styleClass="card" HBox.hgrow="ALWAYS">
+            <Label text="Attacks Mitigated" styleClass="card-title"/>
+            <Label fx:id="lblMitigated" text="0" styleClass="card-value"/>
+        </VBox>
+    </HBox>
+    
+    <Label text="Recent Alerts" styleClass="view-subtitle"/>
+    <TableView fx:id="alertsTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colTime" text="Time" prefWidth="150"/>
+            <TableColumn fx:id="colNode" text="Node" prefWidth="100"/>
+            <TableColumn fx:id="colScore" text="Score" prefWidth="100"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="100"/>
+        </columns>
+    </TableView>
+</VBox>

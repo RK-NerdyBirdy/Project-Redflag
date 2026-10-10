@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="edu.redflag.fx.LoginController"
+      alignment="CENTER" spacing="20" styleClass="root-pane" prefWidth="600.0" prefHeight="400.0">
+    <Label text="REDFLAG LOGIN" styleClass="title"/>
+    <VBox spacing="10" maxWidth="300">
+        <TextField fx:id="emailField" promptText="Email" />
+        <PasswordField fx:id="passwordField" promptText="Password" />
+        <Label fx:id="errorLabel" textFill="red" />
+        <Button text="LOGIN" onAction="#handleLogin" maxWidth="Infinity" styleClass="toggle-btn" />
+    </VBox>
+</VBox>

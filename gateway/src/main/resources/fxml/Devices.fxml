@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="edu.redflag.fx.DevicesController" styleClass="view-pane">
+    <top>
+        <HBox spacing="15" alignment="CENTER_LEFT">
+            <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+            <Label text="COM Port:" styleClass="subtitle"/>
+            <ComboBox fx:id="comPortCombo" prefWidth="150" />
+            <Button text="Connect &amp; Start Telemetry" onAction="#handleConnect" styleClass="action-btn"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <ToggleButton fx:id="simulationToggle" text="SIMULATOR: OFF" styleClass="toggle-btn"/>
+            <ToggleButton fx:id="mitigationToggle" text="MITIGATION: ON" selected="true" styleClass="toggle-btn"/>
+            <Label fx:id="statusBadge" text="SAFE" styleClass="badge, badge-safe"/>
+        </HBox>
+    </top>
+    <center>
+        <TabPane fx:id="deviceTabs" tabClosingPolicy="UNAVAILABLE" />
+    </center>
+</BorderPane>

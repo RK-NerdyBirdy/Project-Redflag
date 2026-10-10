@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="edu.redflag.fx.ReportsController" styleClass="view-pane" spacing="10">
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+    
+    <Label text="Mitigation Reports" styleClass="view-title"/>
+    <HBox spacing="10">
+        <Button text="Refresh" onAction="#refreshReports" styleClass="action-btn"/>
+        <Button text="Export CSV" onAction="#handleExportCsv" styleClass="action-btn"/>
+    </HBox>
+    
+    <TableView fx:id="reportsTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colId" text="ID" prefWidth="50">
+                <cellValueFactory><PropertyValueFactory property="id" /></cellValueFactory>
+            </TableColumn>
+            <TableColumn fx:id="colNode" text="Node" prefWidth="120">
+                <cellValueFactory><PropertyValueFactory property="nodeId" /></cellValueFactory>
+            </TableColumn>
+            <TableColumn fx:id="colStart" text="Started At" prefWidth="150">
+                <cellValueFactory><PropertyValueFactory property="startedAt" /></cellValueFactory>
+            </TableColumn>
+            <TableColumn fx:id="colVector" text="Vector" prefWidth="120">
+                <cellValueFactory><PropertyValueFactory property="vector" /></cellValueFactory>
+            </TableColumn>
+            <TableColumn fx:id="colPeak" text="Peak Score" prefWidth="100">
+                <cellValueFactory><PropertyValueFactory property="peakScore" /></cellValueFactory>
+            </TableColumn>
+            <TableColumn fx:id="colBlocked" text="Blocked" prefWidth="100">
+                <cellValueFactory><PropertyValueFactory property="packetsBlocked" /></cellValueFactory>
+            </TableColumn>
+        </columns>
+    </TableView>
+</VBox>

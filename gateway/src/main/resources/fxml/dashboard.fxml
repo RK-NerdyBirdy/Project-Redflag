@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="edu.redflag.fx.DashboardController" styleClass="root-pane"
+            prefWidth="1180.0" prefHeight="800.0">
+  <top>
+    <HBox spacing="18" styleClass="top-bar">
+      <Label text="REDFLAG / REDFLAG" styleClass="title"/>
+      <Label text="IoT EDGE SECURITY GATEWAY" styleClass="subtitle"/>
+      <Region HBox.hgrow="ALWAYS"/>
+      <ToggleButton fx:id="simulationToggle" text="SIMULATOR: OFF" styleClass="toggle-btn"/>
+      <Label fx:id="statusBadge" text="SAFE" styleClass="badge, badge-safe"/>
+      <ToggleButton fx:id="mitigationToggle" text="MITIGATION: ON" selected="true" styleClass="toggle-btn"/>
+    </HBox>
+  </top>
+
+  <center>
+    <TabPane fx:id="deviceTabs" tabClosingPolicy="UNAVAILABLE" />
+  </center>
+  <bottom>
+    <HBox spacing="10" styleClass="bottom-bar">
+      <Label text="Logged in as: admin@example.com" />
+      <Region HBox.hgrow="ALWAYS" />
+      <Button text="Logout" onAction="#handleLogout" />
+    </HBox>
+  </bottom>
+</BorderPane>

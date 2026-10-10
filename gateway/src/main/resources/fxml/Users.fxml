@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="edu.redflag.fx.UsersController" styleClass="view-pane" spacing="10">
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+    
+    <Label text="User Management (Admin Only)" styleClass="view-title"/>
+    
+    <HBox spacing="10">
+        <TextField fx:id="txtEmail" promptText="Email" prefWidth="200"/>
+        <PasswordField fx:id="txtPassword" promptText="Password" prefWidth="150"/>
+        <ComboBox fx:id="comboRole" promptText="Role" prefWidth="120"/>
+        <Button text="Add User" onAction="#handleAddUser" styleClass="action-btn"/>
+        <Button text="Delete Selected" onAction="#handleDeleteUser" style="-fx-background-color: #550000; -fx-text-fill: white;"/>
+    </HBox>
+    
+    <TableView fx:id="usersTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colId" text="ID" prefWidth="50">
+                <cellValueFactory><PropertyValueFactory property="id" /></cellValueFactory>
+            </TableColumn>
+            <TableColumn fx:id="colEmail" text="Email" prefWidth="250">
+                <cellValueFactory><PropertyValueFactory property="email" /></cellValueFactory>
+            </TableColumn>
+            <TableColumn fx:id="colRole" text="Role" prefWidth="150">
+                <cellValueFactory><PropertyValueFactory property="role" /></cellValueFactory>
+            </TableColumn>
+        </columns>
+    </TableView>
+</VBox>

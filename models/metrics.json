@@ -1,0 +1,25 @@
+{
+  "minority_f1": 0.9984901106342081,
+  "roc_auc": 0.9999240095303757,
+  "accuracy": 0.9969851643371654,
+  "precision_malicious": 1.0,
+  "recall_malicious": 0.9969847739262006,
+  "f1_malicious": 0.9984901106342081,
+  "support_benign": 95.0,
+  "support_malicious": 733610.0,
+  "confusion_matrix": [
+    [
+      95,
+      0
+    ],
+    [
+      2212,
+      731398
+    ]
+  ],
+  "scale_pos_weight": 0.00013017838186908212,
+  "n_features": 51,
+  "n_train": 2934817,
+  "n_test": 733705,
+  "trained_at_utc": "2026-09-02T21:39:28.854723+00:00"
+}

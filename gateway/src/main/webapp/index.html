@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Redflag - Web Console</title>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --bg-panel: #111111;
+            --border-red: #330000;
+            --accent-red: #CC0000;
+            --accent-red-hover: #ff1a1a;
+            --text-main: #E0E0E0;
+            --text-muted: #8b949e;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: "Segoe UI", -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Login Overlay */
+        #login-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-red);
+            padding: 40px;
+            border-radius: 4px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(204, 0, 0, 0.2);
+        }
+
+        .login-box h1 {
+            color: #FF0000;
+            font-size: 24px;
+            margin-top: 0;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+
+        .login-box p {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            background-color: #000;
+            border: 1px solid var(--border-red);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent-red);
+        }
+
+        .action-btn {
+            background-color: var(--accent-red);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: var(--accent-red-hover);
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
+        }
+
+        #login-error {
+            color: var(--accent-red-hover);
+            font-size: 13px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        /* Dashboard Layout */
+        .sidebar {
+            width: 250px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border-red);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+
+        .sidebar-title {
+            color: #FF0000;
+            font-size: 24px;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+
+        .nav-link {
+            padding: 15px 20px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: #1a0000;
+            color: #FF0000;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .status-badge {
+            background-color: #238636;
+            color: white;
+            padding: 8px 22px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 0 8px rgba(46, 160, 67, 0.3);
+            transition: all 0.3s;
+        }
+
+        .status-badge.attack {
+            background-color: #da3633;
+            box-shadow: 0 0 22px rgba(248, 81, 73, 0.6);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-red);
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .card-title {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .card-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+        }
+
+        /* Feed table */
+        .table-container {
+            flex: 1;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-red);
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: #1a0000;
+            color: white;
+            padding: 12px 15px;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 10px 15px;
+            border-top: 1px solid #1a1a1a;
+            font-size: 13px;
+            font-family: monospace;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #0a0a0a;
+        }
+
+        .score-safe { color: #2ea043; }
+        .score-warn { color: #d29922; }
+        .score-attack { color: #f85149; font-weight: bold; }
+
+        #alert-banner {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(204, 0, 0, 0.9);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+            display: none;
+            z-index: 500;
+            border: 2px solid #ff1a1a;
+        }
+
+        @keyframes flashBorder {
+            0% { border-color: transparent; }
+            50% { border-color: #ff0000; box-shadow: inset 0 0 50px rgba(255,0,0,0.5); }
+            100% { border-color: transparent; }
+        }
+
+        .under-attack-body {
+            animation: flashBorder 0.6s infinite;
+            border: 4px solid transparent;
+            box-sizing: border-box;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="login-overlay">
+        <div class="login-box">
+            <h1>REDFLAG</h1>
+            <p>WEB CONSOLE AUTHENTICATION</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <label>OPERATOR EMAIL</label>
+                    <input type="email" id="email" value="admin@example.com" required>
+                </div>
+                <div class="input-group">
+                    <label>PASSPHRASE</label>
+                    <input type="password" id="password" value="password" required>
+                </div>
+                <button type="submit" class="action-btn">AUTHENTICATE</button>
+                <div id="login-error">Authentication failed.</div>
+            </form>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="sidebar-title">REDFLAG</div>
+        <div class="nav-link active">Live Telemetry</div>
+        <a class="nav-link" href="/report/mitigations" target="_blank">Audit Reports</a>
+        <div style="flex:1;"></div>
+        <div class="nav-link" style="color: var(--text-muted);" onclick="logout()">Disconnect</div>
+    </div>
+
+    <div class="main-content" id="main-content">
+        <div id="alert-banner">VOLUMETRIC FLOOD DETECTED</div>
+
+        <div class="header">
+            <h2>EDGE NODE: <span style="color:var(--accent-red);">UNO-01</span></h2>
+            <div id="status-badge" class="status-badge">NODE SECURE</div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="card">
+                <div class="card-title">TOTAL PACKETS (SESSION)</div>
+                <div class="card-value" id="val-packets">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">LATEST JITTER (Δt_std)</div>
+                <div class="card-value" id="val-jitter">0.00ms</div>
+            </div>
+            <div class="card">
+                <div class="card-title">LATEST SCORE</div>
+                <div class="card-value" id="val-score">0.00</div>
+            </div>
+            <div class="card">
+                <div class="card-title">MITIGATION EVENTS</div>
+                <div class="card-value" id="val-events">0</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>TIME</th>
+                        <th>SEQ</th>
+                        <th>Δt (ms)</th>
+                        <th>JITTER (ms)</th>
+                        <th>BYTES</th>
+                        <th>HTTP</th>
+                        <th>AI SCORE</th>
+                        <th>STATE</th>
+                    </tr>
+                </thead>
+                <tbody id="telemetry-body">
+                    <!-- Rows inserted via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let packetCount = 0;
+        let eventCount = 0;
+        let isAttacking = false;
+        let alertTimeout = null;
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    sessionStorage.setItem('rf_token', data.token);
+                    document.getElementById('login-overlay').style.display = 'none';
+                    initDashboard();
+                } else {
+                    document.getElementById('login-error').style.display = 'block';
+                }
+            } catch (err) {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        });
+
+        function logout() {
+            sessionStorage.removeItem('rf_token');
+            if (ws) ws.close();
+            location.reload();
+        }
+
+        async function initDashboard() {
+            // Check auth
+            const token = sessionStorage.getItem('rf_token');
+            if (!token) return;
+
+            // Load initial history
+            try {
+                const res = await fetch('/api/telemetry?node=UNO-01&limit=20', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    const history = await res.json();
+                    history.reverse().forEach(frame => appendRow(frame));
+                    if (history.length > 0) {
+                        packetCount = history[0].seq;
+                        document.getElementById('val-packets').innerText = packetCount;
+                    }
+                }
+            } catch (e) { console.error("Failed to load history", e); }
+
+            // Connect WS
+            connectWs();
+        }
+
+        function connectWs() {
+            const loc = window.location;
+            const wsUri = (loc.protocol === "https:" ? "wss:" : "ws:") + "//" + loc.host + "/ws/telemetry/UNO-01";
+            ws = new WebSocket(wsUri);
+
+            ws.onmessage = function(event) {
+                const frame = JSON.parse(event.data);
+                appendRow(frame);
+                updateMetrics(frame);
+                handleAlerts(frame);
+            };
+
+            ws.onclose = function() {
+                console.log("WS closed, reconnecting...");
+                setTimeout(connectWs, 3000);
+            };
+        }
+
+        function appendRow(frame) {
+            const tbody = document.getElementById('telemetry-body');
+            const row = document.createElement('tr');
+            
+            const time = frame.time ? frame.time.split(' ')[1] : new Date().toLocaleTimeString();
+            let scoreClass = 'score-safe';
+            let stateStr = 'BENIGN';
+            if (frame.score >= 0.5) {
+                scoreClass = 'score-warn';
+                if (frame.score > 0.8) {
+                    scoreClass = 'score-attack';
+                    stateStr = 'ATTACK';
+                }
+            }
+
+            if (frame.attack || frame.http === 403) {
+                stateStr = 'BLOCKED (403)';
+                scoreClass = 'score-attack';
+            }
+
+            row.innerHTML = `
+                <td>${time}</td>
+                <td>${frame.seq}</td>
+                <td>${frame.dt.toFixed(2)}</td>
+                <td>${frame.std20.toFixed(4)}</td>
+                <td>${frame.bytes}</td>
+                <td>${frame.http}</td>
+                <td class="${scoreClass}">${frame.score.toFixed(4)}</td>
+                <td class="${scoreClass}">${stateStr}</td>
+            `;
+
+            tbody.prepend(row);
+            if (tbody.children.length > 30) {
+                tbody.removeChild(tbody.lastChild);
+            }
+        }
+
+        function updateMetrics(frame) {
+            packetCount = Math.max(packetCount, frame.seq);
+            document.getElementById('val-packets').innerText = packetCount;
+            document.getElementById('val-jitter').innerText = frame.std20.toFixed(4) + 'ms';
+            document.getElementById('val-score').innerText = frame.score.toFixed(4);
+        }
+
+        function handleAlerts(frame) {
+            const badge = document.getElementById('status-badge');
+            const banner = document.getElementById('alert-banner');
+            
+            if (frame.attack) {
+                if (!isAttacking) {
+                    isAttacking = true;
+                    eventCount++;
+                    document.getElementById('val-events').innerText = eventCount;
+                    badge.className = 'status-badge attack';
+                    badge.innerText = 'MITIGATING FLOOD';
+                    
+                    banner.innerText = `VOLUMETRIC FLOOD :: NODE [UNO-01] :: SEV [${frame.score.toFixed(2)}]`;
+                    banner.style.display = 'block';
+                    document.body.classList.add('under-attack-body');
+                }
+                
+                if (alertTimeout) clearTimeout(alertTimeout);
+                alertTimeout = setTimeout(() => {
+                    isAttacking = false;
+                    badge.className = 'status-badge';
+                    badge.innerText = 'NODE SECURE';
+                    banner.style.display = 'none';
+                    document.body.classList.remove('under-attack-body');
+                }, 3000);
+            }
+        }
+
+        // Auto-check if logged in already (e.g. refresh)
+        if (sessionStorage.getItem('rf_token')) {
+            document.getElementById('login-overlay').style.display = 'none';
+            initDashboard();
+        }
+
+    </script>
+</body>
+</html>
