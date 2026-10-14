@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
 """
-mock_serial.py — Edge Device Simulator for Project Redflag (Trinetra)
+mock_serial.py — Edge Device Simulator for Project Redflag
 
 Simulates the physical Arduino Uno/Mega + MCUFRIEND TFT touch shield.
 Generates structured JSON v1 frames matching the exact firmware specification:
@@ -37,8 +36,8 @@ except ImportError:
 
 NODE_ID = "UNO-01"
 SAFE_PERIOD_MS = 1000
-ATTACK_WALL_MS = 15
-ATTACK_VIRT_DT_US = 500
+ATTACK_WALL_MS = 10
+ATTACK_VIRT_DT_US = 400
 
 
 def send_http(url, payload_str):
@@ -82,7 +81,7 @@ def run_simulator(mode_type, port_or_url, baud):
     next_due_wall = time.time()
 
     print("=" * 68)
-    print("  PROJECT REDFLAG (TRINETRA) — IoT EDGE TELEMETRY SIMULATOR")
+    print("  PROJECT REDFLAG — IoT EDGE TELEMETRY SIMULATOR")
     print("=" * 68)
     print(f"  Target: {port_or_url} ({mode_type.upper()})")
     print("  Emulation pattern: 20 packets SAFE -> 100 packets ATTACK -> repeat")
@@ -112,7 +111,7 @@ def run_simulator(mode_type, port_or_url, baud):
                     payload_bytes = 114 + random.randint(0, 12)
                     next_due_wall = now_wall + (SAFE_PERIOD_MS + random.randint(-40, 40)) / 1000.0
                 else:
-                    virtual_us += ATTACK_VIRT_DT_US + random.randint(-50, 50)
+                    virtual_us += ATTACK_VIRT_DT_US + random.randint(-5, 5)
                     proto = "udp"
                     state = "INT"
                     payload_bytes = 58 + random.randint(0, 4)

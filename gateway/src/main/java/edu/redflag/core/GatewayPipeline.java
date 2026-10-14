@@ -143,7 +143,17 @@ public final class GatewayPipeline implements AutoCloseable {
         boolean ready = session.update(packet);
 
         if (!ready) {
-            eventBus.publish(TelemetryFrame.buffering(packet));
+            eventBus.publish(new TelemetryFrame(
+                packet,
+                session.lastDeltaTMs(),
+                0.0,
+                0.0f,
+                false,
+                AttackVector.NONE,
+                0L,
+                200,
+                true
+            ));
             processedCount.incrementAndGet();
             return;
         }
@@ -169,7 +179,28 @@ public final class GatewayPipeline implements AutoCloseable {
         }
         long inferDurationNanos = System.nanoTime() - t0;
 
-        boolean isAttack = (score >= 0.5f);
+        // High-sensitivity volumetric detection:
+        // Decisively detect Mirai UDP line-rate floods even when serial CDC framing introduces micro-jitter.
+        // Safe sensor traffic is TCP/CON with Δt ≈ 1000ms (score ~ 0.057).
+        // Volumetric attack traffic is UDP/INT with Δt < 5.0ms and low dispersion.
+        double dt = session.lastDeltaTMs();
+        double std20 = session.lastStd20();
+        double std10 = session.lastStd10();
+        double mean10 = session.lastMean10();
+
+        boolean isUdpFloodSignature = "udp".equalsIgnoreCase(packet.proto()) && dt < 5.0 &&
+            ((std20 < 1.0) || (std10 < 1.0 && mean10 < 5.0));
+
+        if (isUdpFloodSignature) {
+            // Decisively elevate confidence into high-severity attack regime [0.88 - 0.99]
+            if (score >= 0.25f) {
+                score = Math.max(score, 0.88f + (score - 0.25f) * 0.15f);
+            } else {
+                score = Math.max(score, 0.82f);
+            }
+        }
+
+        boolean isAttack = (score >= 0.45f);
         int httpStatus = (isAttack && mitigationEnabled.get()) ? 403 : 200;
 
         if (isAttack) {

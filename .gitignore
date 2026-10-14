@@ -27,3 +27,7 @@ __pycache__/
 .settings/
 .project
 .classpath
+.env
+/.agents
+/.agents
+jdk-21.zip

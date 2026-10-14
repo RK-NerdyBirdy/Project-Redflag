@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public final class NodeSession {
     public static final int[] WINDOWS = {10, 20, 30, 50};
     public static final int CAPACITY = 50;
-    public static final int MIN_PACKETS = 10;
+    public static final int MIN_PACKETS = 3;
     private static final long RESET_GAP_US = 5_000_000L; // 5.0s session gap threshold
     private static final long WRAP_THRESHOLD = 1L << 32;
 
@@ -39,6 +39,8 @@ public final class NodeSession {
 
     private double lastDeltaTMs = Double.NaN;
     private double lastStd20 = Double.NaN;
+    private double lastStd10 = Double.NaN;
+    private double lastMean10 = Double.NaN;
 
     public boolean isReady() {
         return packetsInSession >= MIN_PACKETS;
@@ -127,6 +129,24 @@ public final class NodeSession {
         }
     }
 
+    public double lastStd10() {
+        lock.lock();
+        try {
+            return lastStd10;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public double lastMean10() {
+        lock.lock();
+        try {
+            return lastMean10;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /**
      * Populates the pre-allocated feature array according to the loaded FeatureSchema.
      *
@@ -193,7 +213,10 @@ public final class NodeSession {
                 if (schema.idxStdBytes[w] >= 0)  x[schema.idxStdBytes[w]]  = (float) stdBytes;
                 if (schema.idxPktCount[w] >= 0)  x[schema.idxPktCount[w]]  = (float) n;
 
-                if (winSize == 20) {
+                if (winSize == 10) {
+                    lastStd10 = stdDt;
+                    lastMean10 = meanDt;
+                } else if (winSize == 20) {
                     lastStd20 = stdDt;
                 }
             }

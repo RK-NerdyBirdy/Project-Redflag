@@ -47,7 +47,7 @@ public class MainLayoutController {
 
     public static void triggerAttackBanner(String node, double score) {
         if (instance != null) {
-            java.awt.Toolkit.getDefaultToolkit().beep();
+            AlarmAudio.playAttackAlert();
             Platform.runLater(() -> {
                 instance.alertLabel.setText(String.format("VOLUMETRIC FLOOD :: NODE [%s] :: SEV [%.2f]", node, score));
                 instance.alertPane.setVisible(true);

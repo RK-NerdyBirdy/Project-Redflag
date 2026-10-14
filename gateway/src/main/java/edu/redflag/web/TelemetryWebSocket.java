@@ -84,16 +84,8 @@ public class TelemetryWebSocket {
             );
 
             for (Session session : nodeSessions) {
-                if (!session.isOpen()) {
-                    onClose(session);
-                    continue;
-                }
-                synchronized (session) {
-                    try {
-                        session.getBasicRemote().sendText(jsonPayload);
-                    } catch (IOException e) {
-                        onClose(session);
-                    }
+                if (session.isOpen()) {
+                    session.getAsyncRemote().sendText(jsonPayload);
                 }
             }
         }

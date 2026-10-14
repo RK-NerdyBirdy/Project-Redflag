@@ -1,5 +1,4 @@
-// ============================================================================
-// Project Redflag (Codename: Trinetra) — Edge IoT Device Firmware
+// Project Redflag — Edge IoT Device Firmware
 // Targets: Arduino Uno (ATmega328P) / Mega 2560 + MCUFRIEND TFT Touch Shield
 // Emulates benign IoT sensor telemetry (TCP/CON) and volumetric Mirai UDP floods
 // ============================================================================
@@ -35,8 +34,8 @@ const char NODE_ID[] = "UNO-01";
 
 // Timing intervals
 const unsigned long BENIGN_PERIOD_MS = 1000;
-const unsigned long ATTACK_PERIOD_MS = 15;      // Wall-clock emission cadence (avoid serial choke)
-const uint32_t ATTACK_VIRT_DT_US     = 500;     // Virtual inter-arrival (~0.5 ms line rate)
+const unsigned long ATTACK_PERIOD_MS = 10;      // 10ms emission cadence (100 pkt/sec line rate)
+const uint32_t ATTACK_VIRT_DT_US     = 400;     // Virtual inter-arrival (~0.4 ms line rate)
 const uint32_t REARM_GAP_US          = 6000000; // 6 s link re-association gap to reset session
 
 uint32_t seqNo = 0;
@@ -82,7 +81,7 @@ void drawUI() {
   tft.setTextColor(WHITE);
   tft.setTextSize(2);
   tft.setCursor(12, 8);
-  tft.print(F("REDFLAG / TRINETRA"));
+  tft.print(F("REDFLAG IoT GATEWAY"));
 
   // Initial Status Banner (row below title)
   tft.fillRect(0, 36, tft.width(), 26, BLACK);
@@ -249,9 +248,9 @@ void loop() {
       lastEmitMs = nowUs;
       nextDueMs = nowMs + BENIGN_PERIOD_MS + random(-40, 41); // Realistic jitter
     } else {
-      virtualUs += (ATTACK_VIRT_DT_US + random(-50, 51));     // ~0.5 ms virtual delta_t
+      virtualUs += (ATTACK_VIRT_DT_US + random(-5, 6));       // Machine-level tight delta_t (std ~ 3-5us)
       lastEmitMs = micros();
-      nextDueMs = nowMs + ATTACK_PERIOD_MS;                   // 15 ms emission cycle
+      nextDueMs = nowMs + ATTACK_PERIOD_MS;                   // 10 ms emission cycle
     }
     emitFrame();
   }

@@ -251,6 +251,20 @@
     -fx-background-color: #CC0000;
     -fx-text-fill: #ffffff;
 }
+.combo-box .text-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffffff;
+}
+.combo-box-popup .list-view .scroll-bar:vertical {
+    -fx-background-color: #111111;
+}
+.combo-box-popup .list-view .scroll-bar:vertical .thumb {
+    -fx-background-color: #440000;
+    -fx-background-radius: 4;
+}
+.combo-box-popup .list-view .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #CC0000;
+}
 .table-view {
     -fx-background-color: #111111;
     -fx-border-color: #330000;

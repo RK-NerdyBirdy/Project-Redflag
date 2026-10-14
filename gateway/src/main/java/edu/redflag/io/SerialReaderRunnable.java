@@ -82,7 +82,8 @@ public final class SerialReaderRunnable implements Runnable, AutoCloseable {
     private SerialSession openSession() throws IOException {
         SerialPort port = SerialPort.getCommPort(portName);
         port.setComPortParameters(baudRate, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
-        port.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 2000, 0);
+        // Allow up to 10 seconds for Arduino bootloader startup and initial frame emission
+        port.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 10000, 0);
 
         if (!port.openPort()) {
             throw new IOException("Unable to open serial port: " + portName);

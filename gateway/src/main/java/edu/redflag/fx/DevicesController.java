@@ -36,10 +36,10 @@ public class DevicesController implements TelemetryObserver {
     @FXML
     private void initialize() {
         if (comPortCombo != null) {
-            comPortCombo.getItems().clear();
-            for (com.fazecast.jSerialComm.SerialPort p : com.fazecast.jSerialComm.SerialPort.getCommPorts()) {
-                comPortCombo.getItems().add(p.getSystemPortName());
-            }
+            comPortCombo.setEditable(true);
+            comPortCombo.setVisibleRowCount(10);
+            comPortCombo.setOnShowing(e -> refreshPorts());
+            refreshPorts();
         }
 
         edu.redflag.event.TelemetryObservable bus = edu.redflag.core.GatewayPipeline.getGlobalEventBus();
@@ -68,12 +68,79 @@ public class DevicesController implements TelemetryObserver {
         }
     }
 
+    @FXML
+    public void handleRefreshPorts() {
+        refreshPorts();
+    }
+
+    /**
+     * Actively scans system serial ports and automatically prioritizes Arduino/USB hardware.
+     */
+    public void refreshPorts() {
+        if (comPortCombo == null) return;
+
+        String currentVal = comPortCombo.getValue();
+        comPortCombo.getItems().clear();
+
+        com.fazecast.jSerialComm.SerialPort[] ports = com.fazecast.jSerialComm.SerialPort.getCommPorts();
+        java.util.List<String> priorityPorts = new java.util.ArrayList<>();
+        java.util.List<String> otherPorts = new java.util.ArrayList<>();
+        String bestMatch = null;
+
+        for (com.fazecast.jSerialComm.SerialPort p : ports) {
+            String sysName = p.getSystemPortName();
+            String desc = p.getDescriptivePortName();
+            String portDesc = p.getPortDescription();
+
+            boolean isArduino = (desc != null && desc.toLowerCase().contains("arduino")) ||
+                                (portDesc != null && portDesc.toLowerCase().contains("arduino")) ||
+                                sysName.equalsIgnoreCase("COM8");
+
+            String display = isArduino ? sysName + " (Arduino Uno)" : sysName;
+
+            if (isArduino) {
+                priorityPorts.add(display);
+                if (bestMatch == null) bestMatch = display;
+            } else {
+                otherPorts.add(display);
+            }
+        }
+
+        // Add priority USB devices first
+        comPortCombo.getItems().addAll(priorityPorts);
+        comPortCombo.getItems().addAll(otherPorts);
+
+        // Fallback: If COM8 wasn't in enumeration yet, ensure COM8 is in list
+        boolean hasCom8 = false;
+        for (String item : comPortCombo.getItems()) {
+            if (item.startsWith("COM8")) {
+                hasCom8 = true;
+                break;
+            }
+        }
+        if (!hasCom8) {
+            comPortCombo.getItems().add(0, "COM8 (Arduino Uno)");
+            if (bestMatch == null) bestMatch = "COM8 (Arduino Uno)";
+        }
+
+        // Auto-selection: keep user choice, else auto-select Arduino/COM8
+        if (currentVal != null && !currentVal.isBlank() && comPortCombo.getItems().contains(currentVal)) {
+            comPortCombo.setValue(currentVal);
+        } else if (bestMatch != null) {
+            comPortCombo.setValue(bestMatch);
+        } else if (!comPortCombo.getItems().isEmpty()) {
+            comPortCombo.setValue(comPortCombo.getItems().get(0));
+        }
+    }
+
     private edu.redflag.io.SerialReaderRunnable activeReader;
 
     @FXML
     private void handleConnect() {
-        String port = comPortCombo.getValue();
-        if (port != null && !port.isEmpty()) {
+        String raw = comPortCombo.getValue();
+        if (raw != null && !raw.trim().isEmpty()) {
+            // Strip any descriptive suffix (e.g., "COM8 (Arduino Uno)" -> "COM8")
+            String port = raw.trim().split(" ")[0].trim();
             System.out.println("Starting telemetry on " + port);
             
             if (activeReader != null) {
@@ -136,11 +203,11 @@ public class DevicesController implements TelemetryObserver {
                 bytes = 114 + rnd.nextInt(13);
                 sleepMs = 1000;
             } else {
-                virtualUs += 500 + rnd.nextInt(100) - 50;
+                virtualUs += 400 + rnd.nextInt(10) - 5;
                 proto = "udp";
                 state = "INT";
                 bytes = 58 + rnd.nextInt(5);
-                sleepMs = 25;
+                sleepMs = 10;
             }
 
             String line = String.format(java.util.Locale.ROOT,

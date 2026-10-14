@@ -82,4 +82,4 @@ python scripts/train_model.py --data /path/to/botiot.csv --out models/
 ## Provenance
 
 Auto-generated and pushed from a Kaggle training notebook on {trained_at_utc} as part of
-Project Trinetra (IoT edge gateway for real-time botnet/DDoS detection).
+Project Redflag (IoT edge gateway for real-time botnet/DDoS detection).

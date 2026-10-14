@@ -23,6 +23,10 @@ public class DeviceTabController implements TelemetryObserver {
     @FXML private LineChart<Number, Number> stdChart;
     @FXML private AreaChart<Number, Number> scoreChart;
 
+    @FXML private javafx.scene.chart.NumberAxis deltaXAxis;
+    @FXML private javafx.scene.chart.NumberAxis stdXAxis;
+    @FXML private javafx.scene.chart.NumberAxis scoreXAxis;
+
     @FXML private Label statusBadge;
     @FXML private Label lblThroughput;
     @FXML private Label lblLatency;
@@ -55,9 +59,17 @@ public class DeviceTabController implements TelemetryObserver {
         stdChart.getData().add(seriesStd);
         scoreChart.getData().add(seriesScore);
 
+        deltaChart.setAnimated(false);
+        stdChart.setAnimated(false);
+        scoreChart.setAnimated(false);
+
         deltaChart.setCreateSymbols(false);
         stdChart.setCreateSymbols(false);
         scoreChart.setCreateSymbols(false);
+
+        if (deltaXAxis != null) { deltaXAxis.setAutoRanging(false); deltaXAxis.setAnimated(false); }
+        if (stdXAxis != null)   { stdXAxis.setAutoRanging(false);   stdXAxis.setAnimated(false); }
+        if (scoreXAxis != null) { scoreXAxis.setAutoRanging(false); scoreXAxis.setAnimated(false); }
 
         renderLoop = new javafx.animation.AnimationTimer() {
             @Override
@@ -70,29 +82,58 @@ public class DeviceTabController implements TelemetryObserver {
 
     @Override
     public void onFrame(TelemetryFrame frame) {
-        if (frame.buffering()) return;
         if (inbox.size() > 5000) inbox.poll();
         inbox.offer(frame);
     }
 
     private void drain() {
+        if (inbox.isEmpty()) return;
+
         TelemetryFrame lastFrame = null;
-        int processedInPulse = 0;
+        java.util.List<XYChart.Data<Number, Number>> deltaBatch = new java.util.ArrayList<>();
+        java.util.List<XYChart.Data<Number, Number>> stdBatch = new java.util.ArrayList<>();
+        java.util.List<XYChart.Data<Number, Number>> scoreBatch = new java.util.ArrayList<>();
+
         TelemetryFrame frame;
+        int processedInPulse = 0;
+        long latestSeq = 0;
 
         while ((frame = inbox.poll()) != null && processedInPulse < 100) {
             long seq = frame.packet().seq();
-            seriesDelta.getData().add(new XYChart.Data<>(seq, frame.deltaTMs()));
-            seriesStd.getData().add(new XYChart.Data<>(seq, frame.deltaTStd20()));
-            seriesScore.getData().add(new XYChart.Data<>(seq, frame.score()));
-
-            evictExcessPoints(seriesDelta);
-            evictExcessPoints(seriesStd);
-            evictExcessPoints(seriesScore);
+            latestSeq = seq;
+            deltaBatch.add(new XYChart.Data<>(seq, Double.isNaN(frame.deltaTMs()) ? 0.0 : frame.deltaTMs()));
+            stdBatch.add(new XYChart.Data<>(seq, Double.isNaN(frame.deltaTStd20()) ? 0.0 : frame.deltaTStd20()));
+            scoreBatch.add(new XYChart.Data<>(seq, frame.score()));
 
             lastFrame = frame;
             processedInPulse++;
             packetCounter.incrementAndGet();
+        }
+
+        if (!deltaBatch.isEmpty()) {
+            seriesDelta.getData().addAll(deltaBatch);
+            seriesStd.getData().addAll(stdBatch);
+            seriesScore.getData().addAll(scoreBatch);
+
+            trimSeries(seriesDelta);
+            trimSeries(seriesStd);
+            trimSeries(seriesScore);
+
+            // Slide X-axis window smoothly without triggering expensive layout passes
+            double lower = Math.max(0, latestSeq - MAX_SERIES_POINTS);
+            double upper = Math.max(MAX_SERIES_POINTS, latestSeq);
+            if (deltaXAxis != null) {
+                deltaXAxis.setLowerBound(lower);
+                deltaXAxis.setUpperBound(upper);
+            }
+            if (stdXAxis != null) {
+                stdXAxis.setLowerBound(lower);
+                stdXAxis.setUpperBound(upper);
+            }
+            if (scoreXAxis != null) {
+                scoreXAxis.setLowerBound(lower);
+                scoreXAxis.setUpperBound(upper);
+            }
         }
 
         if (lastFrame != null) {
@@ -100,9 +141,10 @@ public class DeviceTabController implements TelemetryObserver {
         }
     }
 
-    private void evictExcessPoints(XYChart.Series<Number, Number> series) {
-        if (series.getData().size() > MAX_SERIES_POINTS) {
-            series.getData().remove(0, series.getData().size() - MAX_SERIES_POINTS);
+    private void trimSeries(XYChart.Series<Number, Number> series) {
+        int excess = series.getData().size() - MAX_SERIES_POINTS;
+        if (excess > 0) {
+            series.getData().subList(0, excess).clear();
         }
     }
 

@@ -9,7 +9,8 @@
         <HBox spacing="15" alignment="CENTER_LEFT">
             <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
             <Label text="COM Port:" styleClass="subtitle"/>
-            <ComboBox fx:id="comPortCombo" prefWidth="150" />
+            <ComboBox fx:id="comPortCombo" prefWidth="200" editable="true" promptText="Select or type COM" />
+            <Button text="↻ Refresh" onAction="#handleRefreshPorts" styleClass="toggle-btn"/>
             <Button text="Connect &amp; Start Telemetry" onAction="#handleConnect" styleClass="action-btn"/>
             <Region HBox.hgrow="ALWAYS" />
             <ToggleButton fx:id="simulationToggle" text="SIMULATOR: OFF" styleClass="toggle-btn"/>

@@ -17,7 +17,7 @@ Project Redflag (Codename: Redflag) is a high-performance, real-time IoT Volumet
    ```powershell
    mvn -f gateway/pom.xml clean compile exec:java
    ```
-2. **Login:** Use `admin@example.com` / `trinetra2026`.
+2. **Login:** Use `admin@example.com` / `password`.
 3. **Devices:** Navigate to the Devices tab, select your IoT device's COM port, and click Connect.
 4. **Web Console:** 
    - Local Dashboard: `http://localhost:8080/`

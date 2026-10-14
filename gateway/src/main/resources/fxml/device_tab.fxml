@@ -7,20 +7,20 @@
       fx:controller="edu.redflag.fx.DeviceTabController" spacing="10" styleClass="chart-container">
     <LineChart fx:id="deltaChart" title="Packet Inter-Arrival Time Δt (milliseconds)"
                createSymbols="false" animated="false" prefHeight="230.0">
-        <xAxis><NumberAxis label="Sequence #" forceZeroInRange="false"/></xAxis>
-        <yAxis><NumberAxis label="Δt (ms)" forceZeroInRange="true"/></yAxis>
+        <xAxis><NumberAxis fx:id="deltaXAxis" label="Sequence #" forceZeroInRange="false" autoRanging="false" animated="false"/></xAxis>
+        <yAxis><NumberAxis label="Δt (ms)" forceZeroInRange="true" animated="false"/></yAxis>
     </LineChart>
 
     <LineChart fx:id="stdChart" title="Temporal Regularity Dispersion σ_20 (ms)"
                createSymbols="false" animated="false" prefHeight="230.0">
-        <xAxis><NumberAxis label="Sequence #" forceZeroInRange="false"/></xAxis>
-        <yAxis><NumberAxis label="std (ms)" forceZeroInRange="true"/></yAxis>
+        <xAxis><NumberAxis fx:id="stdXAxis" label="Sequence #" forceZeroInRange="false" autoRanging="false" animated="false"/></xAxis>
+        <yAxis><NumberAxis label="std (ms)" forceZeroInRange="true" animated="false"/></yAxis>
     </LineChart>
 
     <AreaChart fx:id="scoreChart" title="Mirai Botnet Attack Probability Score P(Attack)"
                createSymbols="false" animated="false" prefHeight="230.0">
-        <xAxis><NumberAxis label="Sequence #" forceZeroInRange="false"/></xAxis>
-        <yAxis><NumberAxis label="Probability" lowerBound="0.0" upperBound="1.0" autoRanging="false"/></yAxis>
+        <xAxis><NumberAxis fx:id="scoreXAxis" label="Sequence #" forceZeroInRange="false" autoRanging="false" animated="false"/></xAxis>
+        <yAxis><NumberAxis label="Probability" lowerBound="0.0" upperBound="1.0" autoRanging="false" animated="false"/></yAxis>
     </AreaChart>
     
     <HBox spacing="28" styleClass="bottom-bar">

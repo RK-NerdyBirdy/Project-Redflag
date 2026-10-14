@@ -61,7 +61,7 @@ public class RedflagApp extends Application {
             @Override
             protected Void call() throws Exception {
                 System.out.println("=====================================================");
-                System.out.println("  PROJECT REDFLAG (REDFLAG) — EDGE GATEWAY BOOTSTRAP");
+                System.out.println("  PROJECT REDFLAG — EDGE GATEWAY BOOTSTRAP");
                 System.out.println("=====================================================");
 
                 // 1. Locate schema and model artifacts
