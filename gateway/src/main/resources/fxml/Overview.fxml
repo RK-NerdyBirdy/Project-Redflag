@@ -1,36 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
 
-<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="edu.redflag.fx.OverviewController" styleClass="view-pane" spacing="20">
-    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
-    
-    <Label text="SOC Global Overview" styleClass="view-title"/>
-    
-    <HBox spacing="20">
-        <VBox styleClass="card" HBox.hgrow="ALWAYS">
-            <Label text="Active Devices" styleClass="card-title"/>
-            <Label fx:id="lblActiveDevices" text="0" styleClass="card-value"/>
+<ScrollPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="edu.redflag.fx.OverviewController"
+            fitToWidth="true" styleClass="view-pane">
+    <VBox spacing="16" style="-fx-background-color: #050505;">
+        <padding>
+            <Insets top="16" right="16" bottom="16" left="16"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <Label text="SOC Global Overview" styleClass="view-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="REAL-TIME TELEMETRY STREAM"
+                   style="-fx-text-fill: #00cc66; -fx-font-weight: bold; -fx-font-size: 11px; -fx-letter-spacing: 1px;"/>
+        </HBox>
+
+        <!-- Row 1: 6 Stat Cards -->
+        <HBox spacing="12">
+            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="6">
+                <Label text="TOTAL PACKETS" styleClass="stat-label"/>
+                <Label fx:id="statTotalPackets" text="0" styleClass="stat-value"/>
+            </VBox>
+            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="6">
+                <Label text="ATTACKS DETECTED" styleClass="stat-label"/>
+                <Label fx:id="statAttacks" text="0" styleClass="stat-value" style="-fx-text-fill: #ff4444;"/>
+            </VBox>
+            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="6">
+                <Label text="ACTIVE NODES" styleClass="stat-label"/>
+                <Label fx:id="statActiveNodes" text="0" styleClass="stat-value"/>
+            </VBox>
+            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="6">
+                <Label text="NODES UNDER ATTACK" styleClass="stat-label"/>
+                <Label fx:id="statNodesAttacked" text="0" styleClass="stat-value" style="-fx-text-fill: #00cc66;"/>
+            </VBox>
+            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="6">
+                <Label text="AVG LATENCY (µs)" styleClass="stat-label"/>
+                <Label fx:id="statLatency" text="0" styleClass="stat-value"/>
+            </VBox>
+            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="6">
+                <Label text="UPTIME" styleClass="stat-label"/>
+                <Label fx:id="statUptime" text="00:00:00" styleClass="stat-value"/>
+            </VBox>
+        </HBox>
+
+        <!-- Row 2: 2-Column Grid (LineChart & PieChart) -->
+        <GridPane hgap="16" vgap="16">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="60"/>
+                <ColumnConstraints percentWidth="40"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="320" vgrow="ALWAYS"/>
+            </rowConstraints>
+
+            <LineChart fx:id="attackScoreChart" title="Attack Score Timeline (Last 100 Frames)"
+                       animated="false" legendVisible="true" prefHeight="320"
+                       GridPane.columnIndex="0" GridPane.rowIndex="0">
+                <xAxis>
+                    <NumberAxis fx:id="scoreXAxis" label="Frame Index" autoRanging="false"
+                                lowerBound="0" upperBound="100" tickUnit="20" animated="false"/>
+                </xAxis>
+                <yAxis>
+                    <NumberAxis fx:id="scoreYAxis" label="Score [0.0 - 1.0]" autoRanging="false"
+                                lowerBound="0.0" upperBound="1.0" tickUnit="0.2" animated="false"/>
+                </yAxis>
+            </LineChart>
+
+            <PieChart fx:id="protocolPieChart" title="Protocol Distribution"
+                      animated="false" legendVisible="true" prefHeight="320"
+                      GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+        </GridPane>
+
+        <!-- Row 3: Recent Events Table -->
+        <VBox spacing="8" VBox.vgrow="ALWAYS">
+            <Label text="Recent Events (Last 20 Telemetry Logs)" styleClass="view-subtitle"/>
+            <TableView fx:id="recentEventsTable" prefHeight="260" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colNodeId" text="Node ID" prefWidth="180"/>
+                    <TableColumn fx:id="colSeq" text="Seq" prefWidth="90"/>
+                    <TableColumn fx:id="colDeltaT" text="Delta T (ms)" prefWidth="120"/>
+                    <TableColumn fx:id="colScore" text="Score" prefWidth="100"/>
+                    <TableColumn fx:id="colVerdict" text="Verdict" prefWidth="120"/>
+                    <TableColumn fx:id="colLoggedAt" text="Logged At" prefWidth="220"/>
+                </columns>
+            </TableView>
         </VBox>
-        <VBox styleClass="card" HBox.hgrow="ALWAYS">
-            <Label text="Total Packets Processed" styleClass="card-title"/>
-            <Label fx:id="lblTotalPackets" text="0" styleClass="card-value"/>
-        </VBox>
-        <VBox styleClass="card" HBox.hgrow="ALWAYS">
-            <Label text="Attacks Mitigated" styleClass="card-title"/>
-            <Label fx:id="lblMitigated" text="0" styleClass="card-value"/>
-        </VBox>
-    </HBox>
-    
-    <Label text="Recent Alerts" styleClass="view-subtitle"/>
-    <TableView fx:id="alertsTable" VBox.vgrow="ALWAYS">
-        <columns>
-            <TableColumn fx:id="colTime" text="Time" prefWidth="150"/>
-            <TableColumn fx:id="colNode" text="Node" prefWidth="100"/>
-            <TableColumn fx:id="colScore" text="Score" prefWidth="100"/>
-            <TableColumn fx:id="colStatus" text="Status" prefWidth="100"/>
-        </columns>
-    </TableView>
-</VBox>
+    </VBox>
+</ScrollPane>

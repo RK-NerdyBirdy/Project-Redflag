@@ -77,7 +77,7 @@ The gateway may send `"BLOCK\n"` or `"SAFE\n"` back. The firmware reads serial a
 - `SAFE` → Green banner "LINK OK (200)"
 
 ## UI Layout
-- Title bar: "REDFLAG / TRINETRA" at top
+- Title bar: "REDFLAG IoT GATEWAY" at top
 - Main button: fills most of screen width, shows current mode and tap action
 - Bottom bar: "115200 baud | JSON"
 - Status banner area (row below title): shows gateway feedback

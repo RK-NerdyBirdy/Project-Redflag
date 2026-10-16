@@ -1,31 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
 
-<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
-            fx:controller="edu.redflag.fx.MainLayoutController" styleClass="root-pane"
-            prefWidth="1280.0" prefHeight="800.0">
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="edu.redflag.fx.MainLayoutController"
+            styleClass="root-pane" prefWidth="1280.0" prefHeight="800.0">
+    <top>
+        <HBox styleClass="top-bar" spacing="16" alignment="CENTER_LEFT">
+            <padding>
+                <Insets top="10" right="20" bottom="10" left="20"/>
+            </padding>
+            <Label text="REDFLAG" style="-fx-text-fill: #ff2222; -fx-font-size: 20px; -fx-font-weight: 900; -fx-letter-spacing: 2px;"/>
+            <Label text="SOC EDGE GATEWAY" style="-fx-text-fill: #666666; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <HBox spacing="12" alignment="CENTER">
+                <Label fx:id="headerUserLabel" text="operator@redflag.local [ADMIN]" styleClass="header-user-label"/>
+                <Button text="Logout" onAction="#handleLogout" styleClass="toggle-btn"
+                        style="-fx-background-color: #2a0000; -fx-text-fill: #ff6666; -fx-border-color: #550000; -fx-border-radius: 4px;"/>
+            </HBox>
+        </HBox>
+    </top>
     <left>
-        <VBox spacing="10" styleClass="sidebar">
-            <padding><Insets top="20" right="10" bottom="20" left="10"/></padding>
-            <Label text="REDFLAG" styleClass="sidebar-title"/>
-            <Separator />
-            <Button fx:id="btnDashboard" text="Dashboard" onAction="#showDashboard" styleClass="nav-button"/>
-            <Button fx:id="btnDevices" text="Devices &amp; Telemetry" onAction="#showDevices" styleClass="nav-button"/>
-            <Button fx:id="btnReports" text="Mitigation Reports" onAction="#showReports" styleClass="nav-button"/>
-            <Button fx:id="btnUsers" text="User Management" onAction="#showUsers" styleClass="nav-button"/>
-            <Region VBox.vgrow="ALWAYS" />
-            <Button text="Logout" onAction="#handleLogout" styleClass="nav-button, nav-logout"/>
+        <VBox prefWidth="180.0" styleClass="sidebar" spacing="8">
+            <padding>
+                <Insets top="16" right="10" bottom="16" left="10"/>
+            </padding>
+            <Label text="MONITORING" styleClass="subtitle" style="-fx-text-fill: #888888; -fx-padding: 0 0 4 6;"/>
+            <Button fx:id="btnDashboard" text="Dashboard" onAction="#showDashboard" styleClass="nav-button" maxWidth="Infinity"/>
+            <Button fx:id="btnDevices" text="Devices" onAction="#showDevices" styleClass="nav-button" maxWidth="Infinity"/>
+            <Button fx:id="btnReports" text="Reports" onAction="#showReports" styleClass="nav-button" maxWidth="Infinity"/>
+            <Separator style="-fx-background-color: #220000; -fx-opacity: 0.4;"/>
+            <Label text="MANAGEMENT" styleClass="subtitle" style="-fx-text-fill: #888888; -fx-padding: 0 0 4 6;"/>
+            <Button fx:id="btnUsers" text="Users" onAction="#showUsers" styleClass="nav-button" maxWidth="Infinity"/>
+            <Button fx:id="btnSettings" text="Settings" onAction="#showSettings" styleClass="nav-button" maxWidth="Infinity"/>
+            <Region VBox.vgrow="ALWAYS"/>
+            <Separator style="-fx-background-color: #220000; -fx-opacity: 0.4;"/>
+            <Button text="Logout" onAction="#handleLogout" styleClass="nav-button, nav-logout" maxWidth="Infinity"/>
         </VBox>
     </left>
     <center>
-        <StackPane fx:id="contentArea" />
+        <BorderPane>
+            <top>
+                <HBox fx:id="alertPane" visible="false" alignment="CENTER" spacing="12"
+                      style="-fx-background-color: #cc0000; -fx-padding: 8 16; -fx-effect: dropshadow(gaussian, #ff0000, 16, 0.6, 0, 0);">
+                    <Label fx:id="alertLabel" text="VOLUMETRIC FLOOD DETECTED"
+                           style="-fx-text-fill: #ffffff; -fx-font-weight: 900; -fx-font-size: 14px; -fx-letter-spacing: 1px;"/>
+                </HBox>
+            </top>
+            <center>
+                <StackPane fx:id="contentArea"/>
+            </center>
+        </BorderPane>
     </center>
-    <!-- Non-blocking Alert Banner -->
-    <top>
-        <StackPane fx:id="alertPane" visible="false" style="-fx-background-color: #CC0000; -fx-padding: 10;">
-            <Label fx:id="alertLabel" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px;" text="ATTACK DETECTED"/>
-        </StackPane>
-    </top>
+    <bottom>
+        <HBox styleClass="bottom-bar" spacing="16" alignment="CENTER_LEFT">
+            <padding>
+                <Insets top="8" right="20" bottom="8" left="20"/>
+            </padding>
+            <Label fx:id="statusBarUptime" text="Uptime: 00:00:00" styleClass="metric-label" style="-fx-font-size: 12px;"/>
+            <Separator orientation="VERTICAL" style="-fx-opacity: 0.3;"/>
+            <Label fx:id="statusBarNodes" text="Nodes: 0" styleClass="metric-label" style="-fx-font-size: 12px;"/>
+            <Separator orientation="VERTICAL" style="-fx-opacity: 0.3;"/>
+            <Label fx:id="statusBarAttacks" text="Attacks: 0" styleClass="metric-label" style="-fx-text-fill: #ff6666; -fx-font-size: 12px;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="REDFLAG ML ENGINE ACTIVE" style="-fx-text-fill: #00cc66; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+        </HBox>
+    </bottom>
 </BorderPane>

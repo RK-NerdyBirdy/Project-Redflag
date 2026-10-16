@@ -119,6 +119,71 @@
     -fx-stroke-width: 2px;
 }
 
+/* ==========================================================================
+   Chart Legend & Pie Chart Dark Styling
+   ========================================================================== */
+.chart-legend {
+    -fx-background-color: #111111;
+    -fx-border-color: #330000;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 6px 14px;
+}
+
+.chart-legend-item {
+    -fx-text-fill: #e6edf3;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.chart-pie-label {
+    -fx-fill: #e6edf3;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.chart-pie-label-line {
+    -fx-stroke: #8b949e;
+    -fx-stroke-width: 1.2px;
+}
+
+.data0.chart-pie, .default-color0.chart-pie {
+    -fx-pie-color: #f85149;
+    -fx-border-color: #0b0f14;
+    -fx-border-width: 1.5px;
+}
+.default-color0.chart-legend-item-symbol, .data0.chart-legend-item-symbol {
+    -fx-background-color: #f85149;
+}
+
+.data1.chart-pie, .default-color1.chart-pie {
+    -fx-pie-color: #2ea043;
+    -fx-border-color: #0b0f14;
+    -fx-border-width: 1.5px;
+}
+.default-color1.chart-legend-item-symbol, .data1.chart-legend-item-symbol {
+    -fx-background-color: #2ea043;
+}
+
+.data2.chart-pie, .default-color2.chart-pie {
+    -fx-pie-color: #58a6ff;
+    -fx-border-color: #0b0f14;
+    -fx-border-width: 1.5px;
+}
+.default-color2.chart-legend-item-symbol, .data2.chart-legend-item-symbol {
+    -fx-background-color: #58a6ff;
+}
+
+.data3.chart-pie, .default-color3.chart-pie {
+    -fx-pie-color: #d29922;
+    -fx-border-color: #0b0f14;
+    -fx-border-width: 1.5px;
+}
+.default-color3.chart-legend-item-symbol, .data3.chart-legend-item-symbol {
+    -fx-background-color: #d29922;
+}
+
 /* Bottom Bar */
 .bottom-bar {
     -fx-padding: 14 20;
@@ -286,3 +351,177 @@
 .table-row-cell:selected {
     -fx-background-color: #4a0000;
 }
+
+/* ==========================================================================
+   Login Gate, Stat Cards, User Badges & Enhanced Header Styles
+   ========================================================================== */
+
+.login-root {
+    -fx-background-color: #0d0d0d;
+    -fx-font-family: "Segoe UI", -apple-system, sans-serif;
+}
+
+.login-left-panel {
+    -fx-background-color: #1a0000;
+    -fx-border-color: #330000;
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 30px;
+}
+
+.login-logo {
+    -fx-font-size: 48px;
+    -fx-text-fill: #cc0000;
+    -fx-font-weight: 900;
+    -fx-effect: dropshadow(gaussian, #cc0000, 16, 0.4, 0, 0);
+}
+
+.login-tagline {
+    -fx-font-size: 14px;
+    -fx-text-fill: #888888;
+}
+
+.login-form-card {
+    -fx-background-color: #1c1c1c;
+    -fx-background-radius: 8px;
+    -fx-border-color: #330000;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 40px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 20, 0.5, 0, 4);
+}
+
+.login-field {
+    -fx-background-color: #111111;
+    -fx-border-color: #330000;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #ffffff;
+    -fx-prompt-text-fill: #555555;
+    -fx-padding: 8 12;
+    -fx-font-size: 13px;
+}
+
+.login-field:focused {
+    -fx-border-color: #cc0000;
+    -fx-background-color: #151515;
+}
+
+.login-btn {
+    -fx-background-color: #cc0000;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-pref-height: 36px;
+    -fx-min-height: 36px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.login-btn:hover {
+    -fx-background-color: #ff0000;
+    -fx-effect: dropshadow(gaussian, #ff0000, 12, 0.5, 0, 0);
+}
+
+.login-btn:pressed {
+    -fx-background-color: #990000;
+}
+
+.login-error {
+    -fx-text-fill: #ff4444;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.user-badge-admin {
+    -fx-background-color: #cc0000;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8;
+    -fx-background-radius: 10px;
+}
+
+.user-badge-viewer {
+    -fx-background-color: #444444;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8;
+    -fx-background-radius: 10px;
+}
+
+.stat-card {
+    -fx-background-color: #1c1c1c;
+    -fx-border-color: #330000;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 16px;
+}
+
+.stat-value {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #00cc66;
+}
+
+.stat-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #888888;
+    -fx-font-weight: bold;
+}
+
+.header-user-label {
+    -fx-text-fill: #8b949e;
+    -fx-font-size: 12px;
+    -fx-alignment: center-right;
+}
+
+/* ScrollPane & ScrollBars for Device Tab and Views */
+.device-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+}
+
+.device-scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical {
+    -fx-background-color: #0b0f14;
+    -fx-pref-width: 10px;
+}
+
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #330000;
+    -fx-background-radius: 5px;
+}
+
+.scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #cc0000;
+}
+
+.scroll-bar .track {
+    -fx-background-color: #0b0f14;
+}
+
+.scroll-bar .increment-button, .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-bar .increment-arrow, .scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+

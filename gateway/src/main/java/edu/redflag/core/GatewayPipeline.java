@@ -5,13 +5,15 @@ import edu.redflag.error.InferenceTimeoutException;
 import edu.redflag.error.NativeBridgeException;
 import edu.redflag.error.PacketCorruptedException;
 import edu.redflag.event.TelemetryObservable;
-import edu.redflag.core.DeviceRegistry;
+import edu.redflag.event.TelemetryObserver;
 import edu.redflag.infer.InferenceStrategy;
 import edu.redflag.model.AttackVector;
 import edu.redflag.model.Packet;
 import edu.redflag.model.RawPacket;
 import edu.redflag.model.TelemetryFrame;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -19,6 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Concurrency engine routing ingested packets to striped single-thread lanes per node ID.
  * Coordinates feature generation, circuit breaker evaluation, ML inference, and observer publishing.
+ * Supports multiple ingress sources (e.g. USB Serial and TCP/WiFi edge nodes).
  */
 public final class GatewayPipeline implements AutoCloseable {
     private final BlockingQueue<RawPacket> ingressQueue;
@@ -30,7 +33,7 @@ public final class GatewayPipeline implements AutoCloseable {
     private final InferenceStrategy fallbackStrategy;
     private final CircuitBreaker circuitBreaker = new CircuitBreaker(5, 10_000L);
     private final TelemetryObservable eventBus;
-    private final Thread dispatcherThread;
+    private final List<Thread> dispatcherThreads = new CopyOnWriteArrayList<>();
 
     private final AtomicBoolean running = new AtomicBoolean(true);
     private final AtomicBoolean mitigationEnabled = new AtomicBoolean(true);
@@ -42,33 +45,65 @@ public final class GatewayPipeline implements AutoCloseable {
     private static volatile BlockingQueue<RawPacket> GLOBAL_INGRESS_QUEUE;
     private static volatile TelemetryObservable GLOBAL_EVENT_BUS;
     private static volatile GatewayPipeline GLOBAL_INSTANCE;
+    private static final List<TelemetryObserver> GLOBAL_OBSERVERS = new CopyOnWriteArrayList<>();
 
     public static BlockingQueue<RawPacket> getGlobalIngressQueue() {
         return GLOBAL_INGRESS_QUEUE;
     }
-    
+
     public static TelemetryObservable getGlobalEventBus() {
         return GLOBAL_EVENT_BUS;
     }
-    
+
     public static GatewayPipeline getInstance() {
         return GLOBAL_INSTANCE;
     }
 
+    /**
+     * Subscribes an observer globally, registering it immediately if the event bus is active,
+     * or caching it to be attached automatically when the pipeline event bus is initialized.
+     *
+     * @param observer telemetry observer to register
+     */
+    public static void subscribeGlobal(final TelemetryObserver observer) {
+        if (observer == null) return;
+        if (!GLOBAL_OBSERVERS.contains(observer)) {
+            GLOBAL_OBSERVERS.add(observer);
+        }
+        final var bus = GLOBAL_EVENT_BUS;
+        if (bus != null) {
+            bus.subscribe(observer);
+        }
+    }
+
+    /**
+     * Constructs a GatewayPipeline.
+     *
+     * @param ingressQueue Primary ingress queue (e.g. for serial telemetry)
+     * @param deviceRegistry Registry tracking node sessions and observers
+     * @param schema Feature schema definition
+     * @param primaryStrategy High-performance XGBoost inference strategy
+     * @param fallbackStrategy Resilient heuristic inference strategy
+     * @param eventBus Telemetry observable publishing detection results
+     * @param laneCount Number of striped executor lanes
+     */
     public GatewayPipeline(
-        BlockingQueue<RawPacket> ingressQueue,
-        DeviceRegistry deviceRegistry,
-        FeatureSchema schema,
-        InferenceStrategy primaryStrategy,
-        InferenceStrategy fallbackStrategy,
-        TelemetryObservable eventBus,
-        int laneCount
+        final BlockingQueue<RawPacket> ingressQueue,
+        final DeviceRegistry deviceRegistry,
+        final FeatureSchema schema,
+        final InferenceStrategy primaryStrategy,
+        final InferenceStrategy fallbackStrategy,
+        final TelemetryObservable eventBus,
+        final int laneCount
     ) {
         this.ingressQueue = ingressQueue;
         this.deviceRegistry = deviceRegistry;
         GLOBAL_INGRESS_QUEUE = ingressQueue;
         GLOBAL_EVENT_BUS = eventBus;
         GLOBAL_INSTANCE = this;
+        for (final TelemetryObserver obs : GLOBAL_OBSERVERS) {
+            eventBus.subscribe(obs);
+        }
         this.schema = schema;
         this.primaryStrategy = primaryStrategy;
         this.fallbackStrategy = fallbackStrategy;
@@ -82,7 +117,7 @@ public final class GatewayPipeline implements AutoCloseable {
                 1, 1, 0L, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(2048),
                 r -> {
-                    Thread t = new Thread(r, "pipeline-lane-" + laneId);
+                    final Thread t = new Thread(r, "pipeline-lane-" + laneId);
                     t.setDaemon(true);
                     return t;
                 },
@@ -90,12 +125,33 @@ public final class GatewayPipeline implements AutoCloseable {
             );
         }
 
-        this.dispatcherThread = new Thread(this::dispatchLoop, "pipeline-dispatcher");
-        this.dispatcherThread.setDaemon(true);
+        final var primaryDispatcher = new Thread(() -> dispatchLoop(ingressQueue), "pipeline-dispatcher-primary");
+        primaryDispatcher.setDaemon(true);
+        dispatcherThreads.add(primaryDispatcher);
+    }
+
+    /**
+     * Attaches an additional ingress queue (e.g., for TCP network ingestion) and immediately starts
+     * a dedicated worker thread dispatching its frames into the striped pipeline lanes.
+     *
+     * @param queue additional blocking queue of raw frames
+     */
+    public void attachIngressQueue(final BlockingQueue<RawPacket> queue) {
+        Objects.requireNonNull(queue, "Ingress queue must not be null");
+        final var thread = new Thread(() -> dispatchLoop(queue), "pipeline-dispatcher-attached-" + queue.hashCode());
+        thread.setDaemon(true);
+        dispatcherThreads.add(thread);
+        if (running.get()) {
+            thread.start();
+        }
     }
 
     public void start() {
-        dispatcherThread.start();
+        for (final var t : dispatcherThreads) {
+            if (!t.isAlive()) {
+                t.start();
+            }
+        }
     }
 
     public AtomicBoolean mitigationFlag() {
@@ -114,33 +170,33 @@ public final class GatewayPipeline implements AutoCloseable {
         return attackCount.get();
     }
 
-    private void dispatchLoop() {
-        while (running.get() || !ingressQueue.isEmpty()) {
+    private void dispatchLoop(final BlockingQueue<RawPacket> queue) {
+        while (running.get() || !queue.isEmpty()) {
             try {
-                RawPacket raw = ingressQueue.poll(200, TimeUnit.MILLISECONDS);
+                final RawPacket raw = queue.poll(200, TimeUnit.MILLISECONDS);
                 if (raw == null) continue;
 
-                Packet packet;
+                final Packet packet;
                 try {
                     packet = PacketDecoderFactory.forLine(raw.line()).decode(raw);
-                } catch (PacketCorruptedException e) {
+                } catch (final PacketCorruptedException e) {
                     malformedCount.incrementAndGet();
                     continue;
                 }
 
                 // Striped lane dispatch preserving per-node causal sequence ordering
-                int lane = Math.floorMod(packet.nodeId().hashCode(), lanes.length);
+                final int lane = Math.floorMod(packet.nodeId().hashCode(), lanes.length);
                 lanes[lane].execute(() -> processPacket(packet, raw.rxNanos()));
-            } catch (InterruptedException ie) {
+            } catch (final InterruptedException ie) {
                 Thread.currentThread().interrupt();
                 return;
             }
         }
     }
 
-    private void processPacket(Packet packet, long rxNanos) {
-        NodeSession session = deviceRegistry.getSession(packet.nodeId());
-        boolean ready = session.update(packet);
+    private void processPacket(final Packet packet, final long rxNanos) {
+        final NodeSession session = deviceRegistry.getSession(packet.nodeId());
+        final boolean ready = session.update(packet);
 
         if (!ready) {
             eventBus.publish(new TelemetryFrame(
@@ -158,37 +214,37 @@ public final class GatewayPipeline implements AutoCloseable {
             return;
         }
 
-        float[] features = featureBuffers.get();
+        final float[] features = featureBuffers.get();
         session.fill(features, schema, packet);
 
-        long t0 = System.nanoTime();
+        final long t0 = System.nanoTime();
         float score;
         try {
-            InferenceStrategy strategy = circuitBreaker.allow() ? primaryStrategy : fallbackStrategy;
+            final InferenceStrategy strategy = circuitBreaker.allow() ? primaryStrategy : fallbackStrategy;
             try {
                 score = strategy.classify(features);
                 if (strategy == primaryStrategy) {
                     circuitBreaker.recordSuccess();
                 }
-            } catch (NativeBridgeException | InferenceTimeoutException ex) {
+            } catch (final NativeBridgeException | InferenceTimeoutException ex) {
                 circuitBreaker.recordFailure();
                 score = fallbackStrategy.classify(features);
             }
-        } catch (InferenceTimeoutException ex) {
+        } catch (final InferenceTimeoutException ex) {
             return;
         }
-        long inferDurationNanos = System.nanoTime() - t0;
+        final long inferDurationNanos = System.nanoTime() - t0;
 
         // High-sensitivity volumetric detection:
         // Decisively detect Mirai UDP line-rate floods even when serial CDC framing introduces micro-jitter.
         // Safe sensor traffic is TCP/CON with Δt ≈ 1000ms (score ~ 0.057).
         // Volumetric attack traffic is UDP/INT with Δt < 5.0ms and low dispersion.
-        double dt = session.lastDeltaTMs();
-        double std20 = session.lastStd20();
-        double std10 = session.lastStd10();
-        double mean10 = session.lastMean10();
+        final double dt = session.lastDeltaTMs();
+        final double std20 = session.lastStd20();
+        final double std10 = session.lastStd10();
+        final double mean10 = session.lastMean10();
 
-        boolean isUdpFloodSignature = "udp".equalsIgnoreCase(packet.proto()) && dt < 5.0 &&
+        final boolean isUdpFloodSignature = "udp".equalsIgnoreCase(packet.proto()) && dt < 5.0 &&
             ((std20 < 1.0) || (std10 < 1.0 && mean10 < 5.0));
 
         if (isUdpFloodSignature) {
@@ -200,15 +256,15 @@ public final class GatewayPipeline implements AutoCloseable {
             }
         }
 
-        boolean isAttack = (score >= 0.45f);
-        int httpStatus = (isAttack && mitigationEnabled.get()) ? 403 : 200;
+        final boolean isAttack = (score >= 0.45f);
+        final int httpStatus = (isAttack && mitigationEnabled.get()) ? 403 : 200;
 
         if (isAttack) {
             attackCount.incrementAndGet();
         }
         processedCount.incrementAndGet();
 
-        TelemetryFrame frame = new TelemetryFrame(
+        final TelemetryFrame frame = new TelemetryFrame(
             packet,
             session.lastDeltaTMs(),
             session.lastStd20(),
@@ -225,21 +281,23 @@ public final class GatewayPipeline implements AutoCloseable {
     @Override
     public void close() {
         running.set(false);
-        try {
-            dispatcherThread.join(1000);
-        } catch (InterruptedException ignored) {
-            Thread.currentThread().interrupt();
+        for (final var t : dispatcherThreads) {
+            try {
+                t.join(1000);
+            } catch (final InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+            }
         }
 
-        for (ThreadPoolExecutor lane : lanes) {
+        for (final ThreadPoolExecutor lane : lanes) {
             lane.shutdown();
         }
-        for (ThreadPoolExecutor lane : lanes) {
+        for (final ThreadPoolExecutor lane : lanes) {
             try {
                 if (!lane.awaitTermination(2, TimeUnit.SECONDS)) {
                     lane.shutdownNow();
                 }
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 lane.shutdownNow();
                 Thread.currentThread().interrupt();
             }
@@ -248,7 +306,7 @@ public final class GatewayPipeline implements AutoCloseable {
         if (primaryStrategy instanceof AutoCloseable closeable) {
             try {
                 closeable.close();
-            } catch (Exception ignored) {}
+            } catch (final Exception ignored) {}
         }
     }
 }

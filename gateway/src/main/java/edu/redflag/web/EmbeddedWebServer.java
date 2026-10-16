@@ -4,11 +4,14 @@ import edu.redflag.model.RawPacket;
 import org.apache.catalina.Context;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.websocket.server.WsSci;
+import jakarta.websocket.server.ServerContainer;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -55,8 +58,13 @@ public final class EmbeddedWebServer implements AutoCloseable {
 
         ctx.getServletContext().setAttribute("ingressQueue", ingressQueue);
 
-        // Add WebSocket SCI support
-        ctx.addServletContainerInitializer(new WsSci(), Collections.singleton(TelemetryWebSocket.class));
+        // Add WebSocket listener and SCI support
+        ctx.addApplicationListener("org.apache.tomcat.websocket.server.WsContextListener");
+
+        final Set<Class<?>> wsEndpoints = new HashSet<>();
+        wsEndpoints.add(TelemetryWebSocket.class);
+        wsEndpoints.add(NodeTelemetryWebSocket.class);
+        ctx.addServletContainerInitializer(new WsSci(), wsEndpoints);
 
         // Register Servlets
         Tomcat.addServlet(ctx, "AuthServlet", new AuthServlet());
@@ -72,11 +80,13 @@ public final class EmbeddedWebServer implements AutoCloseable {
 
         Tomcat.addServlet(ctx, "TelemetryIngestServlet", new TelemetryIngestServlet(ingressQueue, deviceRegistry));
         ctx.addServletMappingDecoded("/api/telemetry", "TelemetryIngestServlet");
+        ctx.addServletMappingDecoded("/api/telemetry/*", "TelemetryIngestServlet");
 
         Tomcat.addServlet(ctx, "MitigationReportServlet", new MitigationReportServlet());
         ctx.addServletMappingDecoded("/report/mitigations", "MitigationReportServlet");
 
         tomcat.start();
+
         System.out.println("[WEB] Embedded Web Console listening at http://localhost:" + port + "/");
         System.out.println("[WEB] Live WebSocket feed active at ws://localhost:" + port + "/ws/telemetry");
         System.out.println("[WEB] Audit Reports at http://localhost:" + port + "/report/mitigations");

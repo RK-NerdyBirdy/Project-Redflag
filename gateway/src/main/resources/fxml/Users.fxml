@@ -15,6 +15,7 @@
         <PasswordField fx:id="txtPassword" promptText="Password" prefWidth="150"/>
         <ComboBox fx:id="comboRole" promptText="Role" prefWidth="120"/>
         <Button text="Add User" onAction="#handleAddUser" styleClass="action-btn"/>
+        <Button text="Reset Password" onAction="#handleResetPassword" styleClass="action-btn"/>
         <Button text="Delete Selected" onAction="#handleDeleteUser" style="-fx-background-color: #550000; -fx-text-fill: white;"/>
     </HBox>
     

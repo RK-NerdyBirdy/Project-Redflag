@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="edu.redflag.fx.SettingsController"
+      spacing="16" styleClass="view-pane">
+    <padding>
+        <Insets top="20" right="24" bottom="20" left="24"/>
+    </padding>
+
+    <!-- Header Section -->
+    <VBox spacing="4">
+        <Label text="ALERTING &amp; SMTP SETTINGS" styleClass="view-title"/>
+        <Label text="Configure automated email notifications for volumetric DDoS detections" styleClass="view-subtitle"/>
+    </VBox>
+
+    <!-- Settings Form Card -->
+    <VBox spacing="14" styleClass="card" style="-fx-background-color: #141824; -fx-padding: 18; -fx-background-radius: 6; -fx-border-color: #222b40; -fx-border-radius: 6;">
+        <Label text="SMTP Gateway Configuration" style="-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 15px;"/>
+        
+        <GridPane hgap="16" vgap="12">
+            <columnConstraints>
+                <ColumnConstraints minWidth="130" prefWidth="140"/>
+                <ColumnConstraints hgrow="ALWAYS" minWidth="250"/>
+                <ColumnConstraints minWidth="130" prefWidth="140"/>
+                <ColumnConstraints hgrow="ALWAYS" minWidth="250"/>
+            </columnConstraints>
+
+            <!-- Row 0: Host and Port -->
+            <Label text="SMTP Host:" style="-fx-text-fill: #8f9bb3;" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtSmtpHost" promptText="smtp.gmail.com" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+            <Label text="SMTP Port:" style="-fx-text-fill: #8f9bb3;" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
+            <TextField fx:id="txtSmtpPort" promptText="587" prefWidth="100" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
+
+            <!-- Row 1: Username and Password -->
+            <Label text="SMTP User / Email:" style="-fx-text-fill: #8f9bb3;" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtSmtpUser" promptText="alerts@domain.com" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+            <Label text="SMTP Password:" style="-fx-text-fill: #8f9bb3;" GridPane.rowIndex="1" GridPane.columnIndex="2"/>
+            <PasswordField fx:id="txtSmtpPass" promptText="App password / token" GridPane.rowIndex="1" GridPane.columnIndex="3"/>
+
+            <!-- Row 2: Recipients -->
+            <Label text="Alert Recipients:" style="-fx-text-fill: #8f9bb3;" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtRecipients" promptText="admin@redflag.local, soc@redflag.local (comma-separated)"
+                       GridPane.rowIndex="2" GridPane.columnIndex="1" GridPane.columnSpan="3"/>
+
+            <!-- Row 3: Security & Enabled Toggles -->
+            <HBox spacing="24" alignment="CENTER_LEFT" GridPane.rowIndex="3" GridPane.columnIndex="1" GridPane.columnSpan="3">
+                <CheckBox fx:id="chkTls" text="Enable STARTTLS Transport Encryption" style="-fx-text-fill: #e4e9f2;"/>
+                <CheckBox fx:id="chkEnabled" text="Enable Global Email Alerting" style="-fx-text-fill: #e4e9f2; -fx-font-weight: bold;"/>
+            </HBox>
+        </GridPane>
+
+        <!-- Action Buttons and Status Line -->
+        <HBox spacing="14" alignment="CENTER_LEFT" style="-fx-padding: 8 0 0 0;">
+            <Button fx:id="btnSave" text="Save Configuration" onAction="#handleSave" styleClass="action-btn"
+                    style="-fx-background-color: #007acc; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 18;"/>
+            <Button fx:id="btnTestEmail" text="Send Test Email" onAction="#handleTestEmail" styleClass="action-btn"
+                    style="-fx-background-color: #2e384d; -fx-text-fill: #ffffff; -fx-padding: 8 18;"/>
+            <Label fx:id="lblStatus" text="" style="-fx-font-size: 13px; -fx-padding: 0 0 0 10;"/>
+        </HBox>
+    </VBox>
+
+    <!-- Alert Log Table Card -->
+    <VBox spacing="10" VBox.vgrow="ALWAYS" styleClass="card"
+          style="-fx-background-color: #141824; -fx-padding: 18; -fx-background-radius: 6; -fx-border-color: #222b40; -fx-border-radius: 6;">
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <Label text="Recent Email Transmission Log" style="-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 15px;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Refresh Log" onAction="#refreshLog" styleClass="toggle-btn"
+                    style="-fx-background-color: #1b2133; -fx-text-fill: #8f9bb3; -fx-padding: 4 12;"/>
+        </HBox>
+
+        <TableView fx:id="alertLogTable" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colNodeId" text="Node ID" prefWidth="120"/>
+                <TableColumn fx:id="colSentAt" text="Timestamp" prefWidth="170"/>
+                <TableColumn fx:id="colSubject" text="Subject" prefWidth="280"/>
+                <TableColumn fx:id="colSuccess" text="Status" prefWidth="100"/>
+                <TableColumn fx:id="colErrorMsg" text="Details / Error" prefWidth="350"/>
+            </columns>
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            </columnResizePolicy>
+        </TableView>
+    </VBox>
+</VBox>

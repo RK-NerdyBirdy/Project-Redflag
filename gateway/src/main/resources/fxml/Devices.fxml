@@ -6,17 +6,47 @@
 <BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
             fx:controller="edu.redflag.fx.DevicesController" styleClass="view-pane">
     <top>
-        <HBox spacing="15" alignment="CENTER_LEFT">
-            <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
-            <Label text="COM Port:" styleClass="subtitle"/>
-            <ComboBox fx:id="comPortCombo" prefWidth="200" editable="true" promptText="Select or type COM" />
-            <Button text="↻ Refresh" onAction="#handleRefreshPorts" styleClass="toggle-btn"/>
-            <Button text="Connect &amp; Start Telemetry" onAction="#handleConnect" styleClass="action-btn"/>
-            <Region HBox.hgrow="ALWAYS" />
-            <ToggleButton fx:id="simulationToggle" text="SIMULATOR: OFF" styleClass="toggle-btn"/>
-            <ToggleButton fx:id="mitigationToggle" text="MITIGATION: ON" selected="true" styleClass="toggle-btn"/>
-            <Label fx:id="statusBadge" text="SAFE" styleClass="badge, badge-safe"/>
-        </HBox>
+        <VBox spacing="10">
+            <padding><Insets top="10" right="14" bottom="10" left="14"/></padding>
+
+            <!-- Global Action Bar -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="DEVICE INGESTION &amp; INTERFACES" styleClass="view-title" style="-fx-font-size: 16px;"/>
+                <Region HBox.hgrow="ALWAYS" />
+                <ToggleButton fx:id="simulationToggle" text="SIMULATOR: OFF" styleClass="toggle-btn"/>
+                <ToggleButton fx:id="mitigationToggle" text="MITIGATION: ON" selected="true" styleClass="toggle-btn"/>
+                <Label fx:id="statusBadge" text="SAFE" styleClass="badge, badge-safe"/>
+            </HBox>
+
+            <!-- Two-Column Cards: Serial (Left) and TCP/WiFi (Right) -->
+            <HBox spacing="14" alignment="TOP_CENTER">
+                <!-- Left Card: USB/Serial Devices -->
+                <VBox spacing="8" styleClass="card" HBox.hgrow="ALWAYS" alignment="TOP_LEFT" style="-fx-alignment: top-left; -fx-padding: 12 16;">
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label text="🔌 USB / Serial Devices (Arduino Uno)" styleClass="card-title" style="-fx-font-weight: bold; -fx-text-fill: #E0E0E0; -fx-font-size: 13px;"/>
+                    </HBox>
+                    <Label text="Direct USB CDC link at 115200 baud with hardware line-rate sampling." styleClass="subtitle"/>
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <padding><Insets top="4" bottom="4"/></padding>
+                        <Label text="Port:" styleClass="subtitle"/>
+                        <ComboBox fx:id="comPortCombo" prefWidth="210" editable="true" promptText="Select or type COM" />
+                        <Button text="↻ Refresh" onAction="#handleRefreshPorts" styleClass="toggle-btn"/>
+                        <Button text="Connect Link" onAction="#handleConnect" styleClass="action-btn"/>
+                    </HBox>
+                </VBox>
+
+                <!-- Right Card: WiFi / TCP Devices -->
+                <VBox spacing="8" styleClass="card" HBox.hgrow="ALWAYS" alignment="TOP_LEFT" style="-fx-alignment: top-left; -fx-padding: 12 16;">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="📡 TCP Devices (ESP32 Network Nodes)" styleClass="card-title" style="-fx-font-weight: bold; -fx-text-fill: #E0E0E0; -fx-font-size: 13px;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="tcpServerStatus" text="[TCP Server: ACTIVE port 9876]" styleClass="subtitle" style="-fx-text-fill: #2ea043; -fx-font-weight: bold;"/>
+                    </HBox>
+                    <Label text="Auto-detected edge nodes streaming JSON over TCP socket. Click to switch tab." styleClass="subtitle"/>
+                    <ListView fx:id="tcpDevicesList" prefHeight="75" maxHeight="85" style="-fx-background-color: #0b0f14; -fx-border-color: #330000; -fx-border-radius: 4; -fx-control-inner-background: #0b0f14;"/>
+                </VBox>
+            </HBox>
+        </VBox>
     </top>
     <center>
         <TabPane fx:id="deviceTabs" tabClosingPolicy="UNAVAILABLE" />

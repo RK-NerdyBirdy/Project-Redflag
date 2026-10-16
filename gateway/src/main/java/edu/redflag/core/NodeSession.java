@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public final class NodeSession {
     public static final int[] WINDOWS = {10, 20, 30, 50};
     public static final int CAPACITY = 50;
-    public static final int MIN_PACKETS = 3;
+    public static final int MIN_PACKETS = 10;
     private static final long RESET_GAP_US = 5_000_000L; // 5.0s session gap threshold
     private static final long WRAP_THRESHOLD = 1L << 32;
 

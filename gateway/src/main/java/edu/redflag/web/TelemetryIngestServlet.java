@@ -79,7 +79,7 @@ public class TelemetryIngestServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String node = req.getParameter("node");
+        final String node = req.getParameter("node");
         int limit = 100;
         try {
             if (req.getParameter("limit") != null) {
@@ -89,14 +89,20 @@ public class TelemetryIngestServlet extends HttpServlet {
 
         resp.setContentType("application/json;charset=UTF-8");
 
-        String sql = "SELECT seq, delta_t_ms, dt_std_20, bytes, score, is_attack, http_status, logged_at "
-            + "FROM telemetry_logs WHERE node_id = ? ORDER BY id DESC LIMIT ?";
+        final boolean filterByNode = (node != null && !node.isBlank() && !node.equalsIgnoreCase("all"));
+        final String sql = filterByNode
+            ? "SELECT node_id, seq, delta_t_ms, dt_std_20, bytes, proto, state, score, is_attack, http_status, logged_at FROM telemetry_logs WHERE node_id = ? ORDER BY id DESC LIMIT ?"
+            : "SELECT node_id, seq, delta_t_ms, dt_std_20, bytes, proto, state, score, is_attack, http_status, logged_at FROM telemetry_logs ORDER BY id DESC LIMIT ?";
 
         try (Connection conn = Db.get();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, (node != null && !node.isBlank()) ? node : "UNO-01");
-            ps.setInt(2, limit);
+            if (filterByNode) {
+                ps.setString(1, node);
+                ps.setInt(2, limit);
+            } else {
+                ps.setInt(1, limit);
+            }
 
             try (ResultSet rs = ps.executeQuery();
                  PrintWriter out = resp.getWriter()) {
@@ -107,16 +113,27 @@ public class TelemetryIngestServlet extends HttpServlet {
                     if (!first) out.write(",");
                     first = false;
 
+                    final String nodeId = rs.getString("node_id");
+                    final String proto = rs.getString("proto");
+                    final String state = rs.getString("state");
+                    final double dt = rs.getDouble("delta_t_ms");
+                    final double std20 = rs.getDouble("dt_std_20");
+                    final double score = rs.getDouble("score");
+                    final boolean isAttack = rs.getInt("is_attack") == 1;
+
                     out.write(String.format(Locale.ROOT,
-                        "{\"seq\":%d,\"dt\":%.4f,\"std20\":%.4f,\"bytes\":%d,\"score\":%.4f,\"attack\":%b,\"http\":%d,\"time\":\"%s\"}",
+                        "{\"nodeId\":\"%s\",\"node\":\"%s\",\"seq\":%d,\"proto\":\"%s\",\"state\":\"%s\",\"bytes\":%d,\"delta_t\":\"%.3f\",\"dt\":%.4f,\"dt_std20\":\"%.4f\",\"std20\":%.4f,\"score\":%.4f,\"isAtk\":%b,\"attack\":%b,\"http\":%d,\"httpStatus\":%d,\"time\":\"%s\"}",
+                        nodeId != null ? nodeId : "unknown",
+                        nodeId != null ? nodeId : "unknown",
                         rs.getLong("seq"),
-                        rs.getDouble("delta_t_ms"),
-                        rs.getDouble("dt_std_20"),
+                        proto != null ? proto.toUpperCase() : "UDP",
+                        state != null ? state : "INT",
                         rs.getInt("bytes"),
-                        rs.getFloat("score"),
-                        rs.getInt("is_attack") == 1,
+                        dt, dt, std20, std20, score,
+                        isAttack, isAttack,
                         rs.getInt("http_status"),
-                        rs.getString("logged_at")
+                        rs.getInt("http_status"),
+                        rs.getString("logged_at") != null ? rs.getString("logged_at") : ""
                     ));
                 }
                 out.write("]");

@@ -18,23 +18,33 @@ public class ReportsController {
 
     @FXML
     private void refreshReports() {
-        ObservableList<ReportEntry> data = FXCollections.observableArrayList();
-        try (Connection conn = edu.redflag.persist.Db.get(); Statement stmt = conn.createStatement()) {
-            ResultSet rs = stmt.executeQuery("SELECT id, node_id, started_at, vector, peak_score, packets_blocked FROM mitigation_events ORDER BY id DESC LIMIT 100");
-            while (rs.next()) {
-                data.add(new ReportEntry(
-                    rs.getInt("id"),
-                    rs.getString("node_id"),
-                    rs.getString("started_at"),
-                    rs.getString("vector"),
-                    rs.getDouble("peak_score"),
-                    rs.getInt("packets_blocked")
-                ));
+        Thread.ofVirtual().name("reports-loader").start(() -> {
+            ObservableList<ReportEntry> data = FXCollections.observableArrayList();
+            try (Connection conn = edu.redflag.persist.Db.get(); Statement stmt = conn.createStatement()) {
+                ResultSet rs = stmt.executeQuery("SELECT id, node_id, started_at, vector, peak_score, packets_blocked FROM mitigation_events ORDER BY id DESC LIMIT 100");
+                while (rs.next()) {
+                    data.add(new ReportEntry(
+                        rs.getInt("id"),
+                        rs.getString("node_id"),
+                        rs.getString("started_at"),
+                        rs.getString("vector"),
+                        rs.getDouble("peak_score"),
+                        rs.getInt("packets_blocked")
+                    ));
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to fetch reports: " + e.getMessage());
             }
-        } catch (Exception e) {
-            System.err.println("Failed to fetch reports: " + e.getMessage());
-        }
-        reportsTable.setItems(data);
+            javafx.application.Platform.runLater(() -> {
+                if (reportsTable != null) {
+                    if (reportsTable.getItems() == null || reportsTable.getItems().isEmpty()) {
+                        reportsTable.setItems(data);
+                    } else {
+                        reportsTable.getItems().setAll(data);
+                    }
+                }
+            });
+        });
     }
 
     @FXML

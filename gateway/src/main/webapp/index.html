@@ -1,517 +1,846 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Redflag - Web Console</title>
-    <style>
-        :root {
-            --bg-dark: #050505;
-            --bg-panel: #111111;
-            --border-red: #330000;
-            --accent-red: #CC0000;
-            --accent-red-hover: #ff1a1a;
-            --text-main: #E0E0E0;
-            --text-muted: #8b949e;
-        }
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Project Redflag — Web Console</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-base:    #0a0a0a;
+      --bg-surface: #141414;
+      --bg-card:    #1c1c1c;
+      --bg-sidebar: #111111;
+      --accent:     #cc0000;
+      --accent-hi:  #ff3333;
+      --accent-dim: #660000;
+      --text-primary:   #e8e8e8;
+      --text-secondary: #888888;
+      --text-dim:       #555555;
+      --border:     #2a2a2a;
+      --green:      #00cc66;
+      --yellow:     #ffaa00;
+      --red:        #ff3333;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --mono: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    }
+    html, body { height: 100%; background: var(--bg-base); color: var(--text-primary); font-family: var(--font); font-size: 14px; }
 
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: "Segoe UI", -apple-system, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
+    /* ===== Login Screen ===== */
+    #loginScreen {
+      display: flex; align-items: center; justify-content: center;
+      height: 100vh; background: var(--bg-base);
+    }
+    .login-card {
+      background: var(--bg-card); border: 1px solid var(--accent-dim);
+      border-radius: 12px; padding: 48px 40px; width: 400px; text-align: center;
+      box-shadow: 0 0 60px rgba(204,0,0,0.15);
+    }
+    .login-logo { font-size: 36px; font-weight: 900; color: var(--accent); letter-spacing: 4px; margin-bottom: 4px; }
+    .login-subtitle { color: var(--text-secondary); font-size: 12px; margin-bottom: 32px; letter-spacing: 1px; text-transform: uppercase; }
+    .login-card input {
+      width: 100%; padding: 12px 16px; margin-bottom: 14px; border-radius: 6px;
+      background: #0d0d0d; border: 1px solid #333; color: var(--text-primary);
+      font-size: 14px; font-family: var(--font); outline: none; transition: border 0.2s;
+    }
+    .login-card input:focus { border-color: var(--accent); }
+    #loginBtn {
+      width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none;
+      border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer;
+      letter-spacing: 1px; transition: background 0.2s; margin-top: 4px;
+    }
+    #loginBtn:hover { background: var(--accent-hi); }
+    #loginError { color: var(--red); font-size: 12px; margin-top: 12px; min-height: 18px; }
 
-        /* Login Overlay */
-        #login-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--bg-dark);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+    /* ===== App Shell (hidden until logged in) ===== */
+    #appShell { display: none; height: 100vh; flex-direction: column; }
+    #appShell.visible { display: flex; }
 
-        .login-box {
-            background-color: var(--bg-panel);
-            border: 1px solid var(--border-red);
-            padding: 40px;
-            border-radius: 4px;
-            width: 320px;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(204, 0, 0, 0.2);
-        }
+    /* ===== Top Header ===== */
+    .top-header {
+      display: flex; align-items: center; padding: 0 24px; height: 52px;
+      background: var(--bg-sidebar); border-bottom: 1px solid var(--border);
+      flex-shrink: 0; gap: 16px;
+    }
+    .header-logo { font-size: 18px; font-weight: 900; color: var(--accent); letter-spacing: 3px; }
+    .header-divider { width: 1px; height: 28px; background: var(--border); }
+    .header-tagline { color: var(--text-dim); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+    .header-spacer { flex: 1; }
+    #headerAlertBanner {
+      display: none; padding: 6px 16px; border-radius: 4px;
+      background: rgba(204,0,0,0.2); border: 1px solid var(--accent);
+      color: var(--red); font-size: 12px; font-weight: 700; animation: pulseAlert 1s infinite;
+    }
+    @keyframes pulseAlert { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+    .header-user { font-size: 12px; color: var(--text-secondary); }
+    .role-badge {
+      font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .role-admin { background: var(--accent-dim); color: var(--red); }
+    .role-viewer { background: #222; color: var(--text-secondary); }
+    #logoutBtn {
+      padding: 6px 14px; background: transparent; border: 1px solid #333; color: var(--text-secondary);
+      border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.2s;
+    }
+    #logoutBtn:hover { border-color: var(--accent); color: var(--accent); }
 
-        .login-box h1 {
-            color: #FF0000;
-            font-size: 24px;
-            margin-top: 0;
-            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-        }
+    /* ===== Layout Body ===== */
+    .app-body { display: flex; flex: 1; overflow: hidden; }
 
-        .login-box p {
-            color: var(--text-muted);
-            font-size: 13px;
-            margin-bottom: 30px;
-        }
+    /* ===== Sidebar ===== */
+    .sidebar {
+      width: 200px; background: var(--bg-sidebar); border-right: 1px solid var(--border);
+      flex-shrink: 0; padding: 16px 0; display: flex; flex-direction: column;
+    }
+    .sidebar-section-label {
+      padding: 8px 20px 4px; font-size: 10px; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .nav-btn {
+      display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+      border-left: 3px solid transparent; font-size: 13px; background: none; width: 100%;
+      text-align: left; border-bottom: none; border-top: none; border-right: none;
+    }
+    .nav-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+    .nav-btn.active { color: var(--accent); border-left-color: var(--accent); background: rgba(204,0,0,0.08); }
+    .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+    .sidebar-spacer { flex: 1; }
+    .sidebar-footer { padding: 12px 20px; border-top: 1px solid var(--border); }
+    #tcpStatus { font-size: 11px; color: var(--text-dim); }
+    #tcpStatus.active { color: var(--green); }
 
-        .input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
+    /* ===== Main Content ===== */
+    .main-content { flex: 1; overflow-y: auto; background: var(--bg-base); }
+    .view { display: none; padding: 24px; }
+    .view.active { display: block; }
+    .view-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; color: var(--text-primary); }
+    .view-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
 
-        .input-group label {
-            display: block;
-            color: var(--text-muted);
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
+    /* ===== Stat Cards ===== */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 20px; transition: border-color 0.2s;
+    }
+    .stat-card:hover { border-color: #333; }
+    .stat-card.alert { border-color: var(--accent); box-shadow: 0 0 12px rgba(204,0,0,0.2); }
+    .stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .stat-value { font-size: 30px; font-weight: 700; line-height: 1; color: var(--text-primary); }
+    .stat-value.red   { color: var(--red); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.yellow { color: var(--yellow); }
+    .stat-unit { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
 
-        .input-group input {
-            width: 100%;
-            background-color: #000;
-            border: 1px solid var(--border-red);
-            color: white;
-            padding: 10px;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
+    /* ===== Charts ===== */
+    .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .chart-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+    .chart-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; }
+    .chart-container { position: relative; height: 200px; }
 
-        .input-group input:focus {
-            outline: none;
-            border-color: var(--accent-red);
-        }
+    /* ===== Nodes Grid ===== */
+    .nodes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .node-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px;
+    }
+    .node-card.under-attack { border-color: var(--accent); animation: attackGlow 1.5s infinite; }
+    @keyframes attackGlow { 0%,100% { box-shadow: 0 0 0 rgba(204,0,0,0); } 50% { box-shadow: 0 0 16px rgba(204,0,0,0.4); } }
+    .node-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .node-name { font-size: 15px; font-weight: 700; }
+    .node-type { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: #1a1a1a; color: var(--text-secondary); }
+    .node-type.serial { color: #5599ff; }
+    .node-type.wifi { color: #00bb88; }
+    .node-status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+    .node-status-dot.attack { background: var(--red); animation: blink 0.5s infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+    .node-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .node-metric { background: #111; border-radius: 4px; padding: 8px; text-align: center; }
+    .node-metric-val { font-size: 16px; font-weight: 700; font-family: var(--mono); }
+    .node-metric-lbl { font-size: 9px; color: var(--text-dim); text-transform: uppercase; margin-top: 2px; }
+    .node-score-bar { height: 4px; background: #222; border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
+    .node-score-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s, background 0.3s; }
+    .node-verdict { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+    .node-verdict.attack { color: var(--red); }
+    .node-verdict.safe { color: var(--green); }
+    .no-nodes-msg { color: var(--text-dim); text-align: center; padding: 48px; font-size: 14px; }
 
-        .action-btn {
-            background-color: var(--accent-red);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
+    /* ===== Event Log Table ===== */
+    .table-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .table-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); }
+    .table-badge { font-size: 11px; padding: 2px 10px; border-radius: 10px; background: #1a1a1a; color: var(--text-secondary); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { padding: 10px 16px; text-align: left; font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 16px; border-bottom: 1px solid #181818; font-family: var(--mono); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .verdict-attack { color: var(--red); font-weight: 700; }
+    .verdict-safe   { color: var(--green); }
+    .score-high     { color: var(--red); }
+    .score-mid      { color: var(--yellow); }
+    .score-low      { color: var(--green); }
 
-        .action-btn:hover {
-            background-color: var(--accent-red-hover);
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
-        }
+    /* ===== WS Status ===== */
+    .ws-status-bar {
+      position: fixed; bottom: 0; left: 200px; right: 0; height: 28px;
+      background: var(--bg-sidebar); border-top: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 20px;
+      font-size: 11px; color: var(--text-dim); z-index: 100;
+    }
+    .ws-dot { width: 6px; height: 6px; border-radius: 50%; background: #555; flex-shrink: 0; }
+    .ws-dot.connected { background: var(--green); }
+    .ws-dot.disconnected { background: var(--red); }
 
-        #login-error {
-            color: var(--accent-red-hover);
-            font-size: 13px;
-            margin-top: 15px;
-            display: none;
-        }
-
-        /* Dashboard Layout */
-        .sidebar {
-            width: 250px;
-            background-color: var(--bg-panel);
-            border-right: 1px solid var(--border-red);
-            display: flex;
-            flex-direction: column;
-            padding: 20px 0;
-        }
-
-        .sidebar-title {
-            color: #FF0000;
-            font-size: 24px;
-            font-weight: 900;
-            text-align: center;
-            margin-bottom: 30px;
-            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-        }
-
-        .nav-link {
-            padding: 15px 20px;
-            color: var(--text-main);
-            text-decoration: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            background-color: #1a0000;
-            color: #FF0000;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .header h2 {
-            margin: 0;
-            font-size: 20px;
-        }
-
-        .status-badge {
-            background-color: #238636;
-            color: white;
-            padding: 8px 22px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            box-shadow: 0 0 8px rgba(46, 160, 67, 0.3);
-            transition: all 0.3s;
-        }
-
-        .status-badge.attack {
-            background-color: #da3633;
-            box-shadow: 0 0 22px rgba(248, 81, 73, 0.6);
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .card {
-            background-color: var(--bg-panel);
-            border: 1px solid var(--border-red);
-            border-radius: 4px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .card-title {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-
-        .card-value {
-            font-size: 36px;
-            font-weight: bold;
-            color: white;
-        }
-
-        /* Feed table */
-        .table-container {
-            flex: 1;
-            background-color: var(--bg-panel);
-            border: 1px solid var(--border-red);
-            border-radius: 4px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        th {
-            background-color: #1a0000;
-            color: white;
-            padding: 12px 15px;
-            font-size: 13px;
-        }
-
-        td {
-            padding: 10px 15px;
-            border-top: 1px solid #1a1a1a;
-            font-size: 13px;
-            font-family: monospace;
-        }
-
-        tr:nth-child(even) td {
-            background-color: #0a0a0a;
-        }
-
-        .score-safe { color: #2ea043; }
-        .score-warn { color: #d29922; }
-        .score-attack { color: #f85149; font-weight: bold; }
-
-        #alert-banner {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(204, 0, 0, 0.9);
-            color: white;
-            padding: 15px 40px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 18px;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
-            display: none;
-            z-index: 500;
-            border: 2px solid #ff1a1a;
-        }
-
-        @keyframes flashBorder {
-            0% { border-color: transparent; }
-            50% { border-color: #ff0000; box-shadow: inset 0 0 50px rgba(255,0,0,0.5); }
-            100% { border-color: transparent; }
-        }
-
-        .under-attack-body {
-            animation: flashBorder 0.6s infinite;
-            border: 4px solid transparent;
-            box-sizing: border-box;
-        }
-
-    </style>
+    /* ===== Responsive ===== */
+    @media (max-width: 900px) {
+      .charts-grid { grid-template-columns: 1fr; }
+      .sidebar { width: 56px; }
+      .nav-btn span:not(.nav-icon) { display: none; }
+      .sidebar-section-label { display: none; }
+      .sidebar-footer { padding: 8px; }
+      .ws-status-bar { left: 56px; }
+    }
+    @media (max-width: 600px) {
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .nodes-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
 
-    <div id="login-overlay">
-        <div class="login-box">
-            <h1>REDFLAG</h1>
-            <p>WEB CONSOLE AUTHENTICATION</p>
-            <form id="login-form">
-                <div class="input-group">
-                    <label>OPERATOR EMAIL</label>
-                    <input type="email" id="email" value="admin@example.com" required>
-                </div>
-                <div class="input-group">
-                    <label>PASSPHRASE</label>
-                    <input type="password" id="password" value="password" required>
-                </div>
-                <button type="submit" class="action-btn">AUTHENTICATE</button>
-                <div id="login-error">Authentication failed.</div>
-            </form>
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">REDFLAG</div>
+    <div class="login-subtitle">IoT Edge Security Console — View Only</div>
+    <input type="email" id="loginEmail" placeholder="Email address" autocomplete="email"/>
+    <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password"/>
+    <button id="loginBtn">SIGN IN</button>
+    <div id="loginError"></div>
+  </div>
+</div>
+
+<!-- ===== APP SHELL ===== -->
+<div id="appShell">
+  <!-- Header -->
+  <div class="top-header">
+    <div class="header-logo">REDFLAG</div>
+    <div class="header-divider"></div>
+    <div class="header-tagline">IoT Edge Security Console</div>
+    <div class="header-spacer"></div>
+    <div id="headerAlertBanner">⚠ VOLUMETRIC FLOOD DETECTED</div>
+    <div class="header-user" id="headerUser">—</div>
+    <span class="role-badge role-viewer" id="headerRole">VIEWER</span>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <div class="app-body">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-section-label">Navigation</div>
+      <button class="nav-btn active" onclick="showView('dashboard',this)">
+        <span class="nav-icon">⬛</span><span>Dashboard</span>
+      </button>
+      <button class="nav-btn" onclick="showView('nodes',this)">
+        <span class="nav-icon">📡</span><span>Devices</span>
+      </button>
+      <button class="nav-btn" onclick="showView('events',this)">
+        <span class="nav-icon">📋</span><span>Event Log</span>
+      </button>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-footer">
+        <div id="tcpStatus">TCP: connecting…</div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+      <!-- DASHBOARD VIEW -->
+      <div id="view-dashboard" class="view active">
+        <div class="view-title">
+          Security Dashboard
+          <div class="view-subtitle">Live telemetry · auto-refreshing every 1s</div>
         </div>
-    </div>
 
-    <div class="sidebar">
-        <div class="sidebar-title">REDFLAG</div>
-        <div class="nav-link active">Live Telemetry</div>
-        <a class="nav-link" href="/report/mitigations" target="_blank">Audit Reports</a>
-        <div style="flex:1;"></div>
-        <div class="nav-link" style="color: var(--text-muted);" onclick="logout()">Disconnect</div>
-    </div>
-
-    <div class="main-content" id="main-content">
-        <div id="alert-banner">VOLUMETRIC FLOOD DETECTED</div>
-
-        <div class="header">
-            <h2>EDGE NODE: <span style="color:var(--accent-red);">UNO-01</span></h2>
-            <div id="status-badge" class="status-badge">NODE SECURE</div>
+        <!-- Stat Cards -->
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Packets</div>
+            <div class="stat-value" id="statPackets">0</div>
+            <div class="stat-unit">this session</div>
+          </div>
+          <div class="stat-card" id="cardAttacks">
+            <div class="stat-label">Attacks Detected</div>
+            <div class="stat-value red" id="statAttacks">0</div>
+            <div class="stat-unit">total events</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Active Nodes</div>
+            <div class="stat-value green" id="statNodes">0</div>
+            <div class="stat-unit">connected devices</div>
+          </div>
+          <div class="stat-card" id="cardUnderAttack">
+            <div class="stat-label">Nodes Under Attack</div>
+            <div class="stat-value" id="statNodesAttacked">0</div>
+            <div class="stat-unit">live threats</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg Detect Latency</div>
+            <div class="stat-value" id="statLatency">—</div>
+            <div class="stat-unit">µs p95</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Session Uptime</div>
+            <div class="stat-value green" id="statUptime">00:00</div>
+            <div class="stat-unit">hh:mm:ss</div>
+          </div>
         </div>
 
-        <div class="metrics-grid">
-            <div class="card">
-                <div class="card-title">TOTAL PACKETS (SESSION)</div>
-                <div class="card-value" id="val-packets">0</div>
-            </div>
-            <div class="card">
-                <div class="card-title">LATEST JITTER (Δt_std)</div>
-                <div class="card-value" id="val-jitter">0.00ms</div>
-            </div>
-            <div class="card">
-                <div class="card-title">LATEST SCORE</div>
-                <div class="card-value" id="val-score">0.00</div>
-            </div>
-            <div class="card">
-                <div class="card-title">MITIGATION EVENTS</div>
-                <div class="card-value" id="val-events">0</div>
-            </div>
+        <!-- Charts -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">Attack Score Timeline</div>
+            <div class="chart-container"><canvas id="scoreChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Protocol Distribution</div>
+            <div class="chart-container"><canvas id="protoChart"></canvas></div>
+          </div>
         </div>
 
-        <div class="table-container">
+        <!-- Recent Events Table -->
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">Recent Events</div>
+            <div class="table-badge" id="recentCount">0 events</div>
+          </div>
+          <div style="overflow-x:auto;">
             <table>
-                <thead>
-                    <tr>
-                        <th>TIME</th>
-                        <th>SEQ</th>
-                        <th>Δt (ms)</th>
-                        <th>JITTER (ms)</th>
-                        <th>BYTES</th>
-                        <th>HTTP</th>
-                        <th>AI SCORE</th>
-                        <th>STATE</th>
-                    </tr>
-                </thead>
-                <tbody id="telemetry-body">
-                    <!-- Rows inserted via JS -->
-                </tbody>
+              <thead>
+                <tr>
+                  <th>Node</th><th>Seq</th><th>Protocol</th>
+                  <th>Δt ms</th><th>Score</th><th>Verdict</th><th>Time</th>
+                </tr>
+              </thead>
+              <tbody id="recentEvents"></tbody>
             </table>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <script>
-        let ws = null;
-        let packetCount = 0;
-        let eventCount = 0;
-        let isAttacking = false;
-        let alertTimeout = null;
+      <!-- NODES VIEW -->
+      <div id="view-nodes" class="view">
+        <div class="view-title">Connected Devices<div class="view-subtitle">All serial and WiFi/TCP nodes</div></div>
+        <div class="nodes-grid" id="nodesGrid">
+          <div class="no-nodes-msg">No active devices detected yet.<br/>Ensure Arduino/ESP32 is connected.</div>
+        </div>
+      </div>
 
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+      <!-- EVENTS VIEW -->
+      <div id="view-events" class="view">
+        <div class="view-title">Event Log<div class="view-subtitle">Full telemetry stream — last 200 events</div></div>
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">Live Stream</div>
+            <div style="display:flex;gap:8px;">
+              <select id="eventFilter" style="background:#111;border:1px solid #333;color:#aaa;padding:4px 8px;border-radius:4px;font-size:12px;">
+                <option value="all">All Events</option>
+                <option value="attack">Attacks Only</option>
+                <option value="safe">Safe Only</option>
+              </select>
+              <button onclick="clearEvents()" style="padding:4px 12px;background:transparent;border:1px solid #333;color:#888;border-radius:4px;cursor:pointer;font-size:12px;">Clear</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;max-height:70vh;overflow-y:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Node</th><th>Seq</th><th>Protocol</th><th>State</th>
+                  <th>Bytes</th><th>Δt ms</th><th>Std20</th><th>Score</th><th>Verdict</th><th>Status</th><th>Time</th>
+                </tr>
+              </thead>
+              <tbody id="eventLogBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-            try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
-                });
+    </div><!-- /main-content -->
+  </div><!-- /app-body -->
 
-                if (res.ok) {
-                    const data = await res.json();
-                    sessionStorage.setItem('rf_token', data.token);
-                    document.getElementById('login-overlay').style.display = 'none';
-                    initDashboard();
-                } else {
-                    document.getElementById('login-error').style.display = 'block';
-                }
-            } catch (err) {
-                document.getElementById('login-error').style.display = 'block';
-            }
-        });
+  <!-- WS Status Bar -->
+  <div class="ws-status-bar">
+    <div class="ws-dot" id="wsDot"></div>
+    <span id="wsStatusText">Connecting to live feed…</span>
+    <div style="flex:1;"></div>
+    <span id="wsPacketRate">0 pkt/s</span>
+    <span>·</span>
+    <span id="wsTotalMsg">0 total</span>
+  </div>
+</div><!-- /appShell -->
 
-        function logout() {
-            sessionStorage.removeItem('rf_token');
-            if (ws) ws.close();
-            location.reload();
-        }
+<script>
+/* ===================================================
+   Project Redflag Web Console — View-Only Dashboard
+   =================================================== */
 
-        async function initDashboard() {
-            // Check auth
-            const token = sessionStorage.getItem('rf_token');
-            if (!token) return;
+// ── State ─────────────────────────────────────────────
+const state = {
+  token: null, userEmail: null, userRole: null,
+  sessionStart: Date.now(),
+  nodes: {},          // nodeId -> { lastScore, isAttack, packets, proto, lastSeen, type }
+  totalPackets: 0,
+  totalAttacks: 0,
+  eventLog: [],       // capped at 200
+  pktRateCount: 0,
+  pktRateDisplay: 0,
+  protoCounters: { udp:0, tcp:0, icmp:0, other:0 },
+  latencySamples: [],
+};
 
-            // Load initial history
-            try {
-                const res = await fetch('/api/telemetry?node=UNO-01&limit=20', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                if (res.ok) {
-                    const history = await res.json();
-                    history.reverse().forEach(frame => appendRow(frame));
-                    if (history.length > 0) {
-                        packetCount = history[0].seq;
-                        document.getElementById('val-packets').innerText = packetCount;
-                    }
-                }
-            } catch (e) { console.error("Failed to load history", e); }
+// ── Auth ───────────────────────────────────────────────
+const $ = id => document.getElementById(id);
 
-            // Connect WS
-            connectWs();
-        }
+async function doLogin() {
+  const email = $('loginEmail').value.trim();
+  const pwd   = $('loginPassword').value;
+  $('loginError').textContent = '';
+  $('loginBtn').textContent = 'Signing in…';
+  $('loginBtn').disabled = true;
 
-        function connectWs() {
-            const loc = window.location;
-            const wsUri = (loc.protocol === "https:" ? "wss:" : "ws:") + "//" + loc.host + "/ws/telemetry/UNO-01";
-            ws = new WebSocket(wsUri);
+  try {
+    const resp = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(pwd)}`,
+      credentials: 'same-origin'
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Login failed');
 
-            ws.onmessage = function(event) {
-                const frame = JSON.parse(event.data);
-                appendRow(frame);
-                updateMetrics(frame);
-                handleAlerts(frame);
-            };
+    state.token     = data.token;
+    state.userEmail = email;
+    state.userRole  = data.role || 'VIEWER';
 
-            ws.onclose = function() {
-                console.log("WS closed, reconnecting...");
-                setTimeout(connectWs, 3000);
-            };
-        }
+    // Store session
+    sessionStorage.setItem('rf_token',    data.token);
+    sessionStorage.setItem('rf_email',    email);
+    sessionStorage.setItem('rf_role',     state.userRole);
 
-        function appendRow(frame) {
-            const tbody = document.getElementById('telemetry-body');
-            const row = document.createElement('tr');
-            
-            const time = frame.time ? frame.time.split(' ')[1] : new Date().toLocaleTimeString();
-            let scoreClass = 'score-safe';
-            let stateStr = 'BENIGN';
-            if (frame.score >= 0.5) {
-                scoreClass = 'score-warn';
-                if (frame.score > 0.8) {
-                    scoreClass = 'score-attack';
-                    stateStr = 'ATTACK';
-                }
-            }
+    showApp();
+  } catch (e) {
+    $('loginError').textContent = e.message;
+  } finally {
+    $('loginBtn').textContent = 'SIGN IN';
+    $('loginBtn').disabled = false;
+  }
+}
 
-            if (frame.attack || frame.http === 403) {
-                stateStr = 'BLOCKED (403)';
-                scoreClass = 'score-attack';
-            }
+function tryRestoreSession() {
+  const token = sessionStorage.getItem('rf_token');
+  if (token) {
+    state.token     = token;
+    state.userEmail = sessionStorage.getItem('rf_email') || 'user';
+    state.userRole  = sessionStorage.getItem('rf_role')  || 'VIEWER';
+    showApp();
+    return true;
+  }
+  return false;
+}
 
-            row.innerHTML = `
-                <td>${time}</td>
-                <td>${frame.seq}</td>
-                <td>${frame.dt.toFixed(2)}</td>
-                <td>${frame.std20.toFixed(4)}</td>
-                <td>${frame.bytes}</td>
-                <td>${frame.http}</td>
-                <td class="${scoreClass}">${frame.score.toFixed(4)}</td>
-                <td class="${scoreClass}">${stateStr}</td>
-            `;
+function showApp() {
+  $('loginScreen').style.display = 'none';
+  $('appShell').classList.add('visible');
+  $('headerUser').textContent = state.userEmail;
+  $('headerRole').textContent = state.userRole;
+  $('headerRole').className = 'role-badge ' + (state.userRole === 'ADMIN' ? 'role-admin' : 'role-viewer');
+  initCharts();
+  connectWebSocket();
+  startUptimeTicker();
+  startPktRateTicker();
+  fetchRecentEvents();
+  setInterval(fetchRecentEvents, 5000);
+}
 
-            tbody.prepend(row);
-            if (tbody.children.length > 30) {
-                tbody.removeChild(tbody.lastChild);
-            }
-        }
+function doLogout() {
+  sessionStorage.clear();
+  state.token = null;
+  $('appShell').classList.remove('visible');
+  $('loginScreen').style.display = 'flex';
+  if (state.ws) { state.ws.close(); state.ws = null; }
+}
 
-        function updateMetrics(frame) {
-            packetCount = Math.max(packetCount, frame.seq);
-            document.getElementById('val-packets').innerText = packetCount;
-            document.getElementById('val-jitter').innerText = frame.std20.toFixed(4) + 'ms';
-            document.getElementById('val-score').innerText = frame.score.toFixed(4);
-        }
+// ── View Switching ─────────────────────────────────────
+function showView(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  $('view-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
 
-        function handleAlerts(frame) {
-            const badge = document.getElementById('status-badge');
-            const banner = document.getElementById('alert-banner');
-            
-            if (frame.attack) {
-                if (!isAttacking) {
-                    isAttacking = true;
-                    eventCount++;
-                    document.getElementById('val-events').innerText = eventCount;
-                    badge.className = 'status-badge attack';
-                    badge.innerText = 'MITIGATING FLOOD';
-                    
-                    banner.innerText = `VOLUMETRIC FLOOD :: NODE [UNO-01] :: SEV [${frame.score.toFixed(2)}]`;
-                    banner.style.display = 'block';
-                    document.body.classList.add('under-attack-body');
-                }
-                
-                if (alertTimeout) clearTimeout(alertTimeout);
-                alertTimeout = setTimeout(() => {
-                    isAttacking = false;
-                    badge.className = 'status-badge';
-                    badge.innerText = 'NODE SECURE';
-                    banner.style.display = 'none';
-                    document.body.classList.remove('under-attack-body');
-                }, 3000);
-            }
-        }
+// ── Charts ─────────────────────────────────────────────
+let scoreChart, protoChart;
 
-        // Auto-check if logged in already (e.g. refresh)
-        if (sessionStorage.getItem('rf_token')) {
-            document.getElementById('login-overlay').style.display = 'none';
-            initDashboard();
-        }
+function initCharts() {
+  const darkGrid  = 'rgba(255,255,255,0.05)';
+  const darkTick  = '#666';
 
-    </script>
+  const scoreCtx = $('scoreChart').getContext('2d');
+  scoreChart = new Chart(scoreCtx, {
+    type: 'line',
+    data: { labels: [], datasets: [] },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: { legend: { labels: { color: '#888', boxWidth: 10, font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: darkTick, maxTicksLimit: 8, font:{size:10} }, grid: { color: darkGrid } },
+        y: { min: 0, max: 1, ticks: { color: darkTick, font:{size:10} }, grid: { color: darkGrid } }
+      }
+    }
+  });
+
+  const protoCtx = $('protoChart').getContext('2d');
+  protoChart = new Chart(protoCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['UDP','TCP','ICMP','OTHER'],
+      datasets: [{ data: [0,0,0,0],
+        backgroundColor: ['#cc0000','#3366cc','#00aa55','#555'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: { legend: { position: 'right', labels: { color: '#888', font:{size:11} } } }
+    }
+  });
+}
+
+function getNodeColor(nodeId) {
+  const palette = ['#cc0000','#3366ff','#00aa77','#cc8800','#aa00cc','#00aacc'];
+  let hash = 0;
+  for (let c of nodeId) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
+  return palette[hash % palette.length];
+}
+
+function getOrAddScoreSeries(nodeId) {
+  let ds = scoreChart.data.datasets.find(d => d.label === nodeId);
+  if (!ds) {
+    const color = getNodeColor(nodeId);
+    ds = {
+      label: nodeId, data: [], borderColor: color,
+      backgroundColor: color + '22', fill: true,
+      tension: 0.3, pointRadius: 0, borderWidth: 2
+    };
+    scoreChart.data.datasets.push(ds);
+  }
+  return ds;
+}
+
+function pushScorePoint(nodeId, score) {
+  const now = new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const ds = getOrAddScoreSeries(nodeId);
+  ds.data.push(score);
+  if (!scoreChart.data.labels.includes(now)) {
+    scoreChart.data.labels.push(now);
+  }
+  const maxPoints = 80;
+  if (ds.data.length > maxPoints) ds.data.shift();
+  if (scoreChart.data.labels.length > maxPoints) scoreChart.data.labels.shift();
+  scoreChart.update('none');
+}
+
+function updateProtoChart() {
+  const d = protoChart.data.datasets[0].data;
+  d[0] = state.protoCounters.udp;
+  d[1] = state.protoCounters.tcp;
+  d[2] = state.protoCounters.icmp;
+  d[3] = state.protoCounters.other;
+  protoChart.update('none');
+}
+
+// ── WebSocket ──────────────────────────────────────────
+function connectWebSocket() {
+  const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${wsProto}//${location.host}/ws/telemetry`;
+  state.ws = new WebSocket(wsUrl);
+
+  state.ws.onopen = () => {
+    $('wsDot').className = 'ws-dot connected';
+    $('wsStatusText').textContent = 'Live feed connected';
+    $('tcpStatus').className = 'active';
+    $('tcpStatus').textContent = 'TCP: active';
+  };
+
+  state.ws.onmessage = (evt) => {
+    try {
+      const frame = JSON.parse(evt.data);
+      if (frame && frame.node) processFrame(frame);
+    } catch (_) {}
+  };
+
+  state.ws.onerror = () => {
+    $('wsDot').className = 'ws-dot disconnected';
+    $('wsStatusText').textContent = 'Feed error — retrying…';
+  };
+
+  state.ws.onclose = () => {
+    $('wsDot').className = 'ws-dot disconnected';
+    $('wsStatusText').textContent = 'Disconnected — retrying in 3s…';
+    $('tcpStatus').className = '';
+    $('tcpStatus').textContent = 'TCP: reconnecting';
+    setTimeout(connectWebSocket, 3000);
+  };
+}
+
+function processFrame(f) {
+  const nodeId  = f.node || f.nodeId || 'unknown';
+  const score   = typeof f.score === 'number' ? f.score : 0;
+  const isAtk   = f.attack === true || f.isAttack === true || score >= 0.5;
+  const proto   = (f.proto || 'other').toLowerCase();
+  const inferUs = f.inferUs || f.infer_us || 0;
+
+  // Update counters
+  state.totalPackets++;
+  if (isAtk) state.totalAttacks++;
+  state.pktRateCount++;
+  state.latencySamples.push(inferUs);
+  if (state.latencySamples.length > 200) state.latencySamples.shift();
+
+  // Track protocol
+  if (proto === 'udp') state.protoCounters.udp++;
+  else if (proto === 'tcp') state.protoCounters.tcp++;
+  else if (proto === 'icmp') state.protoCounters.icmp++;
+  else state.protoCounters.other++;
+
+  // Update node
+  if (!state.nodes[nodeId]) {
+    state.nodes[nodeId] = { lastScore:0, isAttack:false, packets:0, proto:'—', lastSeen:'—', type: f.type || 'SERIAL' };
+  }
+  const node = state.nodes[nodeId];
+  node.lastScore = score;
+  node.isAttack  = isAtk;
+  node.packets++;
+  node.proto     = proto.toUpperCase();
+  node.lastSeen  = new Date().toLocaleTimeString();
+  node.state     = f.state || '—';
+  node.bytes     = f.bytes || 0;
+  node.delta_t   = f.delta_t_ms != null ? f.delta_t_ms.toFixed(3) : '—';
+  node.dt_std20  = f.dt_std_20  != null ? f.dt_std_20.toFixed(4)  : '—';
+  node.seq       = f.seq || 0;
+  node.http      = f.httpStatus || (isAtk ? 403 : 200);
+  node.connType  = f.connectionType || (nodeId.toLowerCase().includes('esp') ? 'TCP/WiFi' : 'SERIAL');
+
+  // Event log
+  const evtEntry = { nodeId, seq: node.seq, proto: node.proto, state: node.state,
+    bytes: node.bytes, delta_t: node.delta_t, dt_std20: node.dt_std20,
+    score, isAtk, http: node.http, time: node.lastSeen };
+  state.eventLog.unshift(evtEntry);
+  if (state.eventLog.length > 200) state.eventLog.pop();
+
+  // Refresh UI
+  $('wsTotalMsg').textContent = state.totalPackets + ' total';
+  pushScorePoint(nodeId, score);
+  updateProtoChart();
+  refreshStatCards();
+  refreshNodesGrid();
+  refreshRecentEvents();
+  refreshEventLog();
+  checkAttackAlert(isAtk);
+}
+
+// ── UI Refresh ─────────────────────────────────────────
+function refreshStatCards() {
+  $('statPackets').textContent  = fmtNum(state.totalPackets);
+  $('statAttacks').textContent  = fmtNum(state.totalAttacks);
+  $('statNodes').textContent    = Object.keys(state.nodes).length;
+
+  const attackingNodes = Object.values(state.nodes).filter(n => n.isAttack).length;
+  const el = $('statNodesAttacked');
+  el.textContent = attackingNodes;
+  el.className = 'stat-value ' + (attackingNodes > 0 ? 'red' : 'green');
+  $('cardUnderAttack').className = 'stat-card' + (attackingNodes > 0 ? ' alert' : '');
+
+  const p95 = calcP95(state.latencySamples);
+  $('statLatency').textContent = p95 > 0 ? p95 : '—';
+}
+
+function refreshNodesGrid() {
+  const grid = $('nodesGrid');
+  const nodes = Object.entries(state.nodes);
+  if (nodes.length === 0) return;
+
+  nodes.forEach(([id, n]) => {
+    let card = document.getElementById('nc-' + CSS.escape(id));
+    if (!card) {
+      card = document.createElement('div');
+      card.id = 'nc-' + CSS.escape(id);
+      card.className = 'node-card';
+      card.innerHTML = `
+        <div class="node-header">
+          <div class="node-status-dot" id="dot-${escId(id)}"></div>
+          <div class="node-name">${id}</div>
+          <div class="node-type ${n.connType === 'TCP/WiFi' ? 'wifi':'serial'}" id="ntype-${escId(id)}">${n.connType || 'SERIAL'}</div>
+        </div>
+        <div class="node-metrics">
+          <div class="node-metric">
+            <div class="node-metric-val" id="nm-pkt-${escId(id)}">0</div>
+            <div class="node-metric-lbl">Packets</div>
+          </div>
+          <div class="node-metric">
+            <div class="node-metric-val" id="nm-proto-${escId(id)}">—</div>
+            <div class="node-metric-lbl">Protocol</div>
+          </div>
+          <div class="node-metric">
+            <div class="node-metric-val" id="nm-http-${escId(id)}">—</div>
+            <div class="node-metric-lbl">HTTP</div>
+          </div>
+        </div>
+        <div class="node-score-bar"><div class="node-score-fill" id="nbar-${escId(id)}" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="node-verdict" id="nverdict-${escId(id)}">MONITORING</div>
+          <div style="font-size:11px;color:#555;" id="nlast-${escId(id)}">—</div>
+        </div>`;
+      // Replace placeholder if present
+      const placeholder = grid.querySelector('.no-nodes-msg');
+      if (placeholder) grid.removeChild(placeholder);
+      grid.appendChild(card);
+    }
+    // Update dynamic fields
+    card.className = 'node-card' + (n.isAttack ? ' under-attack' : '');
+    const dot = document.getElementById('dot-' + escId(id));
+    if (dot) dot.className = 'node-status-dot' + (n.isAttack ? ' attack' : '');
+    const bar = document.getElementById('nbar-' + escId(id));
+    if (bar) {
+      bar.style.width = (n.lastScore * 100).toFixed(1) + '%';
+      bar.style.background = n.lastScore >= 0.5 ? 'var(--red)' : n.lastScore >= 0.3 ? 'var(--yellow)' : 'var(--green)';
+    }
+    const verdict = document.getElementById('nverdict-' + escId(id));
+    if (verdict) {
+      verdict.textContent = n.isAttack ? '⚠ ATTACK — MITIGATED' : '✓ SAFE';
+      verdict.className = 'node-verdict ' + (n.isAttack ? 'attack' : 'safe');
+    }
+    setText('nm-pkt-'  + escId(id), fmtNum(n.packets));
+    setText('nm-proto-'+ escId(id), n.proto);
+    setText('nm-http-' + escId(id), n.http || '—');
+    setText('nlast-'   + escId(id), n.lastSeen);
+  });
+}
+
+function refreshRecentEvents() {
+  const tbody = $('recentEvents');
+  const slice = state.eventLog.slice(0, 20);
+  tbody.innerHTML = slice.map(e => `
+    <tr>
+      <td>${e.nodeId}</td>
+      <td>${e.seq}</td>
+      <td>${e.proto}</td>
+      <td>${e.delta_t}</td>
+      <td class="${scoreClass(e.score)}">${e.score.toFixed(4)}</td>
+      <td class="${e.isAtk?'verdict-attack':'verdict-safe'}">${e.isAtk?'ATTACK':'SAFE'}</td>
+      <td style="color:#555">${e.time}</td>
+    </tr>`).join('');
+  $('recentCount').textContent = state.eventLog.length + ' events';
+}
+
+function refreshEventLog() {
+  const filter = $('eventFilter').value;
+  const tbody  = $('eventLogBody');
+  let filtered = state.eventLog;
+  if (filter === 'attack') filtered = filtered.filter(e => e.isAtk);
+  if (filter === 'safe')   filtered = filtered.filter(e => !e.isAtk);
+
+  tbody.innerHTML = filtered.slice(0, 200).map(e => `
+    <tr>
+      <td>${e.nodeId}</td>
+      <td>${e.seq}</td>
+      <td>${e.proto}</td>
+      <td>${e.state}</td>
+      <td>${e.bytes}</td>
+      <td>${e.delta_t}</td>
+      <td>${e.dt_std20}</td>
+      <td class="${scoreClass(e.score)}">${e.score.toFixed(4)}</td>
+      <td class="${e.isAtk?'verdict-attack':'verdict-safe'}">${e.isAtk?'⚠ ATTACK':'✓ SAFE'}</td>
+      <td style="color:${e.http===403?'var(--red)':'var(--green)'}">HTTP ${e.http}</td>
+      <td style="color:#555">${e.time}</td>
+    </tr>`).join('');
+}
+
+function clearEvents() { state.eventLog = []; refreshEventLog(); refreshRecentEvents(); }
+
+// ── Attack Alert Banner ────────────────────────────────
+let alertTimeout = null;
+function checkAttackAlert(isAttack) {
+  const banner = $('headerAlertBanner');
+  if (isAttack) {
+    banner.style.display = 'block';
+    if (alertTimeout) clearTimeout(alertTimeout);
+    alertTimeout = setTimeout(() => { banner.style.display = 'none'; }, 6000);
+  }
+}
+
+// ── Recent Events from DB ──────────────────────────────
+async function fetchRecentEvents() {
+  // If WS is receiving data, skip; else poll REST
+  if (state.totalPackets > 0) return;
+  try {
+    const resp = await fetch('/api/telemetry/recent?limit=20', {
+      headers: { 'Authorization': 'Bearer ' + state.token }
+    });
+    if (!resp.ok) return;
+    const rows = await resp.json();
+    rows.forEach(r => state.eventLog.unshift(r));
+    refreshRecentEvents();
+  } catch (_) {}
+}
+
+// ── Uptime & Rate Tickers ──────────────────────────────
+function startUptimeTicker() {
+  setInterval(() => {
+    const elapsed = Math.floor((Date.now() - state.sessionStart) / 1000);
+    const h = Math.floor(elapsed / 3600).toString().padStart(2,'0');
+    const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2,'0');
+    const s = (elapsed % 60).toString().padStart(2,'0');
+    $('statUptime').textContent = elapsed >= 3600 ? `${h}:${m}:${s}` : `${m}:${s}`;
+  }, 1000);
+}
+
+function startPktRateTicker() {
+  setInterval(() => {
+    state.pktRateDisplay = state.pktRateCount;
+    state.pktRateCount   = 0;
+    $('wsPacketRate').textContent = state.pktRateDisplay + ' pkt/s';
+  }, 1000);
+}
+
+// ── Helpers ────────────────────────────────────────────
+function fmtNum(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n); }
+function escId(id) { return id.replace(/[^a-zA-Z0-9_-]/g, '_'); }
+function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function scoreClass(s) { return s >= 0.5 ? 'score-high' : s >= 0.3 ? 'score-mid' : 'score-low'; }
+function calcP95(samples) {
+  if (!samples.length) return 0;
+  const sorted = [...samples].sort((a,b)=>a-b);
+  return sorted[Math.floor(sorted.length * 0.95)] || 0;
+}
+
+// ── Init ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Login button
+  $('loginBtn').addEventListener('click', doLogin);
+  $('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  $('loginEmail').addEventListener('keydown', e => { if (e.key === 'Enter') $('loginPassword').focus(); });
+  $('logoutBtn').addEventListener('click', doLogout);
+  $('eventFilter').addEventListener('change', refreshEventLog);
+
+  if (!tryRestoreSession()) {
+    $('loginScreen').style.display = 'flex';
+  }
+});
+</script>
 </body>
 </html>
